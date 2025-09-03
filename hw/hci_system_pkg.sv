@@ -1,0 +1,78 @@
+// Copyright 2025 ETH Zurich and University of Bologna.
+// Solderpad Hardware License, Version 0.51, see LICENSE.solderpad for details.
+// SPDX-License-Identifier: SHL-0.51
+//
+// Sergio Mazzola <smazzola@iis.ee.ethz.ch>
+
+
+package hci_system_pkg;
+
+  /////////////////////////////
+  // Configurable parameters //
+  /////////////////////////////
+  // (see config.mk)
+
+  // Number of initiators
+  parameter int unsigned N_HWPE = `ifdef N_HWPE `N_HWPE `else 1 `endif;                             // Number of HWPE ports
+  parameter int unsigned N_CORE =  `ifdef N_CORE `N_CORE `else 8 `endif;                            // Number of Core ports
+  // Parameters for HWPE initiators
+  parameter int unsigned HWPE_WIDTH_FACT =  `ifdef HWPE_WIDTH_FACT `HWPE_WIDTH_FACT `else 4 `endif; // Bitwidth of an HWPE as multiple of core's bitwidth
+  // Parameters for Memory bank slaves
+  parameter int unsigned N_BANKS   =  `ifdef N_BANKS `N_BANKS `else 16 `endif;                      // Number of Memory banks
+  parameter int unsigned BANK_SIZE =  `ifdef BANK_SIZE `BANK_SIZE `else 2048 `endif;                // Bank size in bytes
+  // Interconnect parameters
+  parameter bit unsigned USE_HCI =  `ifdef USE_HCI `USE_HCI `else 1 `endif;                         // Use HCI (log + HWPE shallow branch) or fully log interconnect
+  parameter int unsigned SEL_LIC =  `ifdef SEL_LIC `SEL_LIC `else 0 `endif;                         // Log interconnect type selector
+
+  //////////////////////////
+  // Hardcoded parameters //
+  //////////////////////////
+
+  localparam int unsigned N_DMA = 0;                                        // No DMA ports supported here
+  localparam int unsigned N_EXT = 1;                                        // Only 1 external port to fill up TCDM
+  localparam int unsigned ID_PERIPH = 2;                                    // Width of periph_id signal to detect master (we should only have 1)
+  localparam int unsigned MAX_N_DATAMOVERS = 256;                           // Max number of Datamover HWPEs
+
+  localparam int unsigned TS_BIT = 21;                                      // TEST_SET_BIT (for Log Interconnect)
+  localparam int unsigned EXPFIFO = 0;                                      // FIFO Depth for HWPE Interconnect
+  localparam int unsigned FILTER_WRITE_R_VALID[0:N_HWPE-1] = '{default: 0}; // Enable filtering of only r_valid respons
+
+  //////////////////////////
+  // Dependent parameters //
+  //////////////////////////
+
+  localparam int unsigned IW = N_HWPE * (USE_HCI + !USE_HCI * HWPE_WIDTH_FACT) + N_CORE + N_DMA + N_EXT; // HCI slave ID Width
+  localparam int unsigned TCDM_SIZE = N_BANKS * BANK_SIZE;                   // Total TCDM size in bytes
+  // In this system we use datamovers as cores and HWPE
+  localparam int unsigned N_DATAMOVERS = N_CORE + N_HWPE;
+
+  ///////////////
+  // Bitwidths //
+  ///////////////
+
+  // Cores bitwidths (default values from `hci_package`)
+  localparam int unsigned DW_cores  = 32;                                   // Data bus width
+  localparam int unsigned AW_cores  = 32;                                   // Address bus width
+  localparam int unsigned BW_cores  = 8;                                    // Width of a "byte" in bits
+  localparam int unsigned UW_cores  = 1;                                    // User field width
+  localparam int unsigned IW_cores  = 8;                                    // ID width
+  localparam int unsigned EW_cores  = 1;                                    // ECC field width
+  localparam int unsigned EHW_cores = 1;                                    // ECC handshake width
+  // HWPE bitwidths
+  localparam int unsigned DW_hwpe  = DW_cores * HWPE_WIDTH_FACT;
+  localparam int unsigned AW_hwpe  = AW_cores;
+  localparam int unsigned BW_hwpe  = BW_cores;
+  localparam int unsigned UW_hwpe  = UW_cores;
+  localparam int unsigned IW_hwpe  = IW_cores;
+  localparam int unsigned EW_hwpe  = EW_cores;
+  localparam int unsigned EHW_hwpe = EHW_cores;
+  // Memory bank bitwidths
+  localparam int unsigned DW_mems  = DW_cores;
+  localparam int unsigned AW_mems  = $clog2(BANK_SIZE);
+  localparam int unsigned BW_mems  = BW_cores;
+  localparam int unsigned UW_mems  = UW_cores;
+  localparam int unsigned IW_mems  = IW;
+  localparam int unsigned EW_mems  = EW_cores;
+  localparam int unsigned EHW_mems = EHW_cores;
+
+endpackage

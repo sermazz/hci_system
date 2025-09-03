@@ -1,0 +1,31 @@
+# Copyright 2025 ETH Zurich and University of Bologna.
+# Solderpad Hardware License, Version 0.51, see LICENSE.solderpad for details.
+# SPDX-License-Identifier: SHL-0.51
+
+package:
+  name: hci_system
+  authors:
+    - "Sergio Mazzola <smazzola@iis.ee.ethz.ch>"
+    - "Luca Codeluppi <lcodelupp@student.ethz.ch>"
+
+dependencies:
+  common_verification: { git: "https://github.com/pulp-platform/common_verification.git", version: 0.2.5 }
+  tech_cells_generic: { git: "https://github.com/pulp-platform/tech_cells_generic.git", version: 0.2.2 }
+  hci: { git: "https://github.com/pulp-platform/hci.git", rev: 5421524afca701e45a83d0f1ec47568c019e021a } # branch: master
+  hwpe-ctrl: { git: "https://github.com/pulp-platform/hwpe-ctrl.git", version: 2.0 }
+  datamover: { git: "https://github.com/pulp-platform/datamover.git", rev: 5df9c9bd9e10ad020763c4291c571adf35ef4ae2 } # branch: transpose
+
+sources:
+  # Level 0
+  - hw/hci_system_pkg.sv
+  - hw/tcdm_wrap.sv
+  - hw/hwpe_ctrl_periph_demux.sv
+  # Level 1
+  - hw/hci_system.sv
+
+  - target: hci_test
+    files:
+      # Level 0
+      - test/tb_hci_system_pkg.sv
+      # Level 1
+      - test/tb_hci_system.sv
