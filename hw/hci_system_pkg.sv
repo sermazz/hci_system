@@ -35,16 +35,25 @@ package hci_system_pkg;
 
   localparam int unsigned TS_BIT = 21;                                      // TEST_SET_BIT (for Log Interconnect)
   localparam int unsigned EXPFIFO = 0;                                      // FIFO Depth for HWPE Interconnect
-  localparam int unsigned FILTER_WRITE_R_VALID[0:N_HWPE-1] = '{default: 0}; // Enable filtering of only r_valid respons
+
+  localparam int unsigned WORD_SIZE = 4; // in bytes
 
   //////////////////////////
   // Dependent parameters //
   //////////////////////////
 
-  localparam int unsigned IW = N_HWPE * (USE_HCI + !USE_HCI * HWPE_WIDTH_FACT) + N_CORE + N_DMA + N_EXT; // HCI slave ID Width
-  localparam int unsigned TCDM_SIZE = N_BANKS * BANK_SIZE;                   // Total TCDM size in bytes
+  // If fully log interco is used, instantiate additional HWPE_WIDTH_FACT narrow core ports for each HWPE
+  localparam int unsigned N_NARROW_HCI = N_CORE + (N_HWPE * HWPE_WIDTH_FACT) * !USE_HCI;
+  // If HCI is used, instantiate one dedicated wide port for each HWPE
+  localparam int unsigned N_WIDE_HCI = N_HWPE * USE_HCI;
+
   // In this system we use datamovers as cores and HWPE
   localparam int unsigned N_DATAMOVERS = N_CORE + N_HWPE;
+
+  localparam int unsigned IW = N_NARROW_HCI + N_WIDE_HCI + N_DMA + N_EXT; // One-hot slave ID width
+  localparam int unsigned FILTER_WRITE_R_VALID[0:N_WIDE_HCI-1] = '{default: 0}; // Enable filtering of only r_valid respons
+  localparam int unsigned TCDM_SIZE = N_BANKS * BANK_SIZE;                // Total TCDM size in bytes
+
 
   ///////////////
   // Bitwidths //

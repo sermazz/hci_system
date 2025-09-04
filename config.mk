@@ -9,7 +9,7 @@ N_CORE ?= 8
 HWPE_WIDTH_FACT ?= 4
 N_BANKS ?= 16
 BANK_SIZE ?= 512
-USE_HCI ?= 1
+USE_HCI ?= 0
 SEL_LIC ?= 0
 
 

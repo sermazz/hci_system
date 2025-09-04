@@ -23,9 +23,11 @@ if {$GUI == 1} {
     add wave -noupdate -group params /hci_system_pkg/MAX_N_DATAMOVERS
     add wave -noupdate -group params /hci_system_pkg/TS_BIT
     add wave -noupdate -group params /hci_system_pkg/EXPFIFO
+    add wave -noupdate -group params /hci_system_pkg/N_NARROW_HCI
+    add wave -noupdate -group params /hci_system_pkg/N_WIDE_HCI
+    add wave -noupdate -group params /hci_system_pkg/N_DATAMOVERS
     add wave -noupdate -group params /hci_system_pkg/IW
     add wave -noupdate -group params /hci_system_pkg/TCDM_SIZE
-    add wave -noupdate -group params /hci_system_pkg/N_DATAMOVERS
     add wave -noupdate -group params /hci_system_pkg/DW_cores
     add wave -noupdate -group params /hci_system_pkg/AW_cores
     add wave -noupdate -group params /hci_system_pkg/BW_cores
@@ -87,8 +89,8 @@ if {$GUI == 1} {
         add wave -noupdate -group tcdm_banks -label bank_$i /tb_hci_system/i_dut/i_tcdm/gen_banks[$i]/i_bank/sram
     }
 
-    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_CORE]} {incr i} {
-        add wave -noupdate -group hci_initiator_core_if -group core_$i /tb_hci_system/i_dut/hci_initiator_core[$i]/*
+    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_NARROW_HCI]} {incr i} {
+        add wave -noupdate -group hci_initiator_core_if -group core_$i /tb_hci_system/i_dut/hci_initiator_narrow[$i]/*
     }
     for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_EXT]} {incr i} {
         add wave -noupdate -group hci_initiator_ext_if -group ext_$i /tb_hci_system/i_dut/hci_initiator_ext[$i]/*

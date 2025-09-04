@@ -6,6 +6,7 @@
 // Arpan Suravi Prasad <prasadar@iis.ee.ethz.ch>
 
 package tb_hci_system_pkg;
+  import hci_system_pkg::*;
 
   ///////////////////
   // Tb parameters //
@@ -16,9 +17,7 @@ package tb_hci_system_pkg;
   localparam real TbTA = 0.2; // in ns
   localparam real TbTT = CLK_PERIOD/1000 - 0.2; // wait `#` needs ns because of `timeunit 1ns`
 
-  localparam int unsigned PERIPH_SEL_WIDTH = $clog2(hci_system_pkg::MAX_N_DATAMOVERS);
-
-  localparam int unsigned WORD_SIZE = 4; // in bytes
+  localparam int unsigned PERIPH_SEL_WIDTH = $clog2(MAX_N_DATAMOVERS);
 
   //////////////////////
   // Datamover config //
@@ -36,7 +35,7 @@ package tb_hci_system_pkg;
   localparam logic [31:0] DM_CORE_OUT_PTR = 1 * WORD_SIZE; // output base address
   localparam logic [31:0] DM_CORE_LEN0 = {dm_core_in_d1_len[7:0], dm_core_in_d0_len, dm_core_tot_len}; // length register 0
   localparam logic [31:0] DM_CORE_LEN1 = {dm_core_in_d1_len[11:8], dm_core_out_d1_len, dm_core_out_d0_len}; // length register 1
-  localparam logic [31:0] DM_CORE_IN_D0_STRIDE = (hci_system_pkg::N_BANKS) * WORD_SIZE; // dim 0 read stride
+  localparam logic [31:0] DM_CORE_IN_D0_STRIDE = (N_BANKS) * WORD_SIZE; // dim 0 read stride
   localparam logic [31:0] DM_CORE_IN_D1_STRIDE = 0; // dim 1 read stride
   localparam logic [31:0] DM_CORE_IN_D2_STRIDE = 0; // dim 2 read stride
   localparam logic [31:0] DM_CORE_OUT_D0_STRIDE = 1 * WORD_SIZE; // dim 0 write stride
@@ -52,14 +51,14 @@ package tb_hci_system_pkg;
   localparam logic [11:0] dm_hwpe_tot_len = 2;
 
   // In bytes
-  localparam logic [31:0] DM_HWPE_IN_PTR = hci_system_pkg::N_BANKS * 20 * WORD_SIZE; // input base address
-  localparam logic [31:0] DM_HWPE_OUT_PTR = hci_system_pkg::N_BANKS * 20 * WORD_SIZE + hci_system_pkg::HWPE_WIDTH_FACT * WORD_SIZE; // output base address
+  localparam logic [31:0] DM_HWPE_IN_PTR = N_BANKS * 20 * WORD_SIZE; // input base address
+  localparam logic [31:0] DM_HWPE_OUT_PTR = N_BANKS * 20 * WORD_SIZE + HWPE_WIDTH_FACT * WORD_SIZE; // output base address
   localparam logic [31:0] DM_HWPE_LEN0 = {dm_hwpe_in_d1_len[7:0], dm_hwpe_in_d0_len, dm_hwpe_tot_len}; // length register 0
   localparam logic [31:0] DM_HWPE_LEN1 = {dm_hwpe_in_d1_len[11:8], dm_hwpe_out_d1_len, dm_hwpe_out_d0_len}; // length register 1
-  localparam logic [31:0] DM_HWPE_IN_D0_STRIDE = (hci_system_pkg::N_BANKS) * WORD_SIZE; // dim 0 read stride
+  localparam logic [31:0] DM_HWPE_IN_D0_STRIDE = (N_BANKS) * WORD_SIZE; // dim 0 read stride
   localparam logic [31:0] DM_HWPE_IN_D1_STRIDE = 0; // dim 1 read stride
   localparam logic [31:0] DM_HWPE_IN_D2_STRIDE = 0; // dim 2 read stride
-  localparam logic [31:0] DM_HWPE_OUT_D0_STRIDE = (hci_system_pkg::N_BANKS) * WORD_SIZE; // dim 0 write stride
+  localparam logic [31:0] DM_HWPE_OUT_D0_STRIDE = (N_BANKS) * WORD_SIZE; // dim 0 write stride
   localparam logic [31:0] DM_HWPE_OUT_D1_STRIDE = 0; // dim 1 write stride
   localparam logic [31:0] DM_HWPE_OUT_D2_STRIDE = 0; // dim 2 write stride
   localparam logic [31:0] DM_HWPE_TRANSP_MODE = {29'b0, 3'b000}; // transpose mode (i.e., element width)
@@ -77,10 +76,10 @@ package tb_hci_system_pkg;
     logic                                 wen;
     logic [3:0]                           be;
     logic [31:0]                          data;
-    logic [hci_system_pkg::ID_PERIPH-1:0] id;
+    logic [ID_PERIPH-1:0] id;
     logic [31:0]                          r_data;
     logic                                 r_valid;
-    logic [hci_system_pkg::ID_PERIPH-1:0] r_id;
+    logic [ID_PERIPH-1:0] r_id;
   } periph_bus_t;
 
   task automatic periph_write (

@@ -53,6 +53,12 @@ module hci_system
 
   // Null interface
   hci_core_intf #(
+  `ifndef TARGET_SYNTHESIS
+    .WAIVE_RQ3_ASSERT ( WAIVE_RQ3_ASSERT ),
+    .WAIVE_RQ4_ASSERT ( WAIVE_RQ4_ASSERT ),
+    .WAIVE_RSP3_ASSERT ( WAIVE_RSP3_ASSERT ),
+    .WAIVE_RSP5_ASSERT ( WAIVE_RSP5_ASSERT ),
+  `endif
     .DW ( 1 ),
     .AW ( 1 ),
     .BW ( 1 ),
@@ -75,7 +81,15 @@ module hci_system
     EHW: EHW_cores
   };
 
+  // The number of narrow ports for cores is N_CORE when HCI is used (HWPEs use dedicated wide ports)
+  // When fully log interco is used, instantiate additional HWPE_WIDTH_FACT ports for each HWPE
   hci_core_intf #(
+  `ifndef TARGET_SYNTHESIS
+    .WAIVE_RQ3_ASSERT ( WAIVE_RQ3_ASSERT ),
+    .WAIVE_RQ4_ASSERT ( WAIVE_RQ4_ASSERT ),
+    .WAIVE_RSP3_ASSERT ( WAIVE_RSP3_ASSERT ),
+    .WAIVE_RSP5_ASSERT ( WAIVE_RSP5_ASSERT ),
+  `endif
     .DW ( HCI_SIZE_cores.DW ),
     .AW ( HCI_SIZE_cores.AW ),
     .BW ( HCI_SIZE_cores.BW ),
@@ -83,11 +97,17 @@ module hci_system
     .IW ( HCI_SIZE_cores.IW ),
     .EW ( HCI_SIZE_cores.EW ),
     .EHW ( HCI_SIZE_cores.EHW )
-  ) hci_initiator_core [0:N_CORE-1] (
+  ) hci_initiator_narrow [0:N_NARROW_HCI-1] (
     .clk( clk_i )
   );
 
   hci_core_intf #(
+  `ifndef TARGET_SYNTHESIS
+    .WAIVE_RQ3_ASSERT ( WAIVE_RQ3_ASSERT ),
+    .WAIVE_RQ4_ASSERT ( WAIVE_RQ4_ASSERT ),
+    .WAIVE_RSP3_ASSERT ( WAIVE_RSP3_ASSERT ),
+    .WAIVE_RSP5_ASSERT ( WAIVE_RSP5_ASSERT ),
+  `endif
     .DW ( HCI_SIZE_cores.DW ),
     .AW ( HCI_SIZE_cores.AW ),
     .BW ( HCI_SIZE_cores.BW ),
@@ -111,6 +131,12 @@ module hci_system
   };
 
   hci_core_intf #(
+  `ifndef TARGET_SYNTHESIS
+    .WAIVE_RQ3_ASSERT ( WAIVE_RQ3_ASSERT ),
+    .WAIVE_RQ4_ASSERT ( WAIVE_RQ4_ASSERT ),
+    .WAIVE_RSP3_ASSERT ( WAIVE_RSP3_ASSERT ),
+    .WAIVE_RSP5_ASSERT ( WAIVE_RSP5_ASSERT ),
+  `endif
     .DW ( HCI_SIZE_mems.DW ),
     .AW ( HCI_SIZE_mems.AW ),
     .BW ( HCI_SIZE_mems.BW ),
@@ -133,7 +159,14 @@ module hci_system
     EHW: EHW_hwpe
   };
 
+  // Wide interfaces Datamover-side
   hci_core_intf #(
+  `ifndef TARGET_SYNTHESIS
+    .WAIVE_RQ3_ASSERT ( WAIVE_RQ3_ASSERT ),
+    .WAIVE_RQ4_ASSERT ( WAIVE_RQ4_ASSERT ),
+    .WAIVE_RSP3_ASSERT ( WAIVE_RSP3_ASSERT ),
+    .WAIVE_RSP5_ASSERT ( WAIVE_RSP5_ASSERT ),
+  `endif
     .DW ( HCI_SIZE_hwpe.DW ),
     .AW ( HCI_SIZE_hwpe.AW ),
     .BW ( HCI_SIZE_hwpe.BW ),
@@ -145,9 +178,35 @@ module hci_system
     .clk( clk_i )
   );
 
-  /////////////////////
-  // HCI             //
-  /////////////////////
+  // Wide interfaces HCI-side (used when USE_HCI == 1)
+  hci_core_intf #(
+  `ifndef TARGET_SYNTHESIS
+    .WAIVE_RQ3_ASSERT ( WAIVE_RQ3_ASSERT ),
+    .WAIVE_RQ4_ASSERT ( WAIVE_RQ4_ASSERT ),
+    .WAIVE_RSP3_ASSERT ( WAIVE_RSP3_ASSERT ),
+    .WAIVE_RSP5_ASSERT ( WAIVE_RSP5_ASSERT ),
+  `endif
+    .DW ( HCI_SIZE_hwpe.DW ),
+    .AW ( HCI_SIZE_hwpe.AW ),
+    .BW ( HCI_SIZE_hwpe.BW ),
+    .UW ( HCI_SIZE_hwpe.UW ),
+    .IW ( HCI_SIZE_hwpe.IW ),
+    .EW ( HCI_SIZE_hwpe.EW ),
+    .EHW ( HCI_SIZE_hwpe.EHW )
+  ) hci_initiator_wide [0:N_WIDE_HCI-1] (
+    .clk( clk_i )
+  );
+
+  if (USE_HCI) begin
+    hci_core_assign i_hci_wide_assign (
+      .tcdm_target ( hci_initiator_hwpe ),
+      .tcdm_initiator ( hci_initiator_wide )
+    );
+  end
+
+  /////////
+  // HCI //
+  /////////
 
   hci_interconnect_ctrl_t hci_control;
   assign hci_control.arb_policy         = arb_policy_i;
@@ -155,8 +214,8 @@ module hci_system
   assign hci_control.low_prio_max_stall = low_prio_max_stall_i;
 
   hci_interconnect #(
-    .N_HWPE ( N_HWPE ),
-    .N_CORE ( N_CORE ),
+    .N_HWPE ( N_WIDE_HCI ),
+    .N_CORE ( N_NARROW_HCI ),
     .N_DMA ( N_DMA ),
     .N_EXT ( N_EXT ),
     .N_MEM ( N_BANKS ),
@@ -165,12 +224,12 @@ module hci_system
     .EXPFIFO ( EXPFIFO ),
     .SEL_LIC ( SEL_LIC ),
     .FILTER_WRITE_R_VALID ( FILTER_WRITE_R_VALID ),
-    `ifndef TARGET_SYNTHESIS
+  `ifndef TARGET_SYNTHESIS
     .WAIVE_RQ3_ASSERT ( WAIVE_RQ3_ASSERT ),
     .WAIVE_RQ4_ASSERT ( WAIVE_RQ4_ASSERT ),
     .WAIVE_RSP3_ASSERT ( WAIVE_RSP3_ASSERT ),
     .WAIVE_RSP5_ASSERT ( WAIVE_RSP5_ASSERT ),
-    `endif
+  `endif
     .`HCI_SIZE_PARAM(cores) ( `HCI_SIZE_PARAM(cores) ),
     .`HCI_SIZE_PARAM(mems) ( `HCI_SIZE_PARAM(mems) ),
     .`HCI_SIZE_PARAM(hwpe) ( `HCI_SIZE_PARAM(hwpe) )
@@ -179,11 +238,11 @@ module hci_system
     .rst_ni ( rst_ni ),
     .clear_i ( clear_i ),
     .ctrl_i ( hci_control ),
-    .cores ( hci_initiator_core ),
+    .cores ( hci_initiator_narrow ),
     .dma ( hci_null_if ),
     .ext ( hci_initiator_ext ),
     .mems ( hci_target_mems ),
-    .hwpe ( hci_initiator_hwpe )
+    .hwpe ( hci_initiator_wide )
   );
 
   ////////////////////////
@@ -275,7 +334,7 @@ module hci_system
         .test_mode_i ( 1'b0 ),
         .evt_o ( /* Unconneccted */ ),
         // TCDM interface, to bind to HCI interface
-        .tcdm ( hci_initiator_core[ii] ),
+        .tcdm ( hci_initiator_narrow[ii] ),
         .periph ( periph_datamovers_if[ii] )
       );
     end
@@ -299,6 +358,52 @@ module hci_system
         .tcdm ( hci_initiator_hwpe[ii] ),
         .periph ( periph_datamovers_if[N_CORE + ii] )
       );
+    end
+
+    if (!USE_HCI) begin
+      for (genvar ii = 0; ii < N_HWPE; ii++) begin: gen_initiators_hwpes
+        // When fully log interco is used, route the wide ports of the datamovers
+        // to each additional set of HWPE_WIDTH_FACT narrow core ports
+        for (genvar f = 0; f < HWPE_WIDTH_FACT; f++) begin
+          localparam int IDX = N_CORE + ii*HWPE_WIDTH_FACT + f;
+
+          assign hci_initiator_narrow[IDX].req = hci_initiator_hwpe[ii].req;
+          assign hci_initiator_narrow[IDX].add = hci_initiator_hwpe[ii].add + f*WORD_SIZE;
+          assign hci_initiator_narrow[IDX].wen = hci_initiator_hwpe[ii].wen;
+          assign hci_initiator_narrow[IDX].data = hci_initiator_hwpe[ii].data[(f+1)*WORD_SIZE*8-1:f*WORD_SIZE*8];
+          assign hci_initiator_narrow[IDX].be = hci_initiator_hwpe[ii].be[(f+1)*WORD_SIZE-1:f*WORD_SIZE];
+          assign hci_initiator_narrow[IDX].r_ready = hci_initiator_hwpe[ii].r_ready;
+          assign hci_initiator_narrow[IDX].user = hci_initiator_hwpe[ii].user;
+          assign hci_initiator_narrow[IDX].id = hci_initiator_hwpe[ii].id;
+          assign hci_initiator_hwpe[ii].r_data[(f+1)*WORD_SIZE*8-1:f*WORD_SIZE*8] = hci_initiator_narrow[IDX].r_data;
+          assign hci_initiator_narrow[IDX].ecc = hci_initiator_hwpe[ii].ecc;
+          assign hci_initiator_narrow[IDX].ereq = hci_initiator_hwpe[ii].ereq;
+          assign hci_initiator_narrow[IDX].r_eready = hci_initiator_hwpe[ii].r_eready;
+        end
+
+        // Take only the first word of the wide port
+        assign hci_initiator_hwpe[ii].r_user = hci_initiator_narrow[N_CORE + ii*HWPE_WIDTH_FACT].r_user;
+        assign hci_initiator_hwpe[ii].r_id = hci_initiator_narrow[N_CORE + ii*HWPE_WIDTH_FACT].r_id;
+        assign hci_initiator_hwpe[ii].r_opc = hci_initiator_narrow[N_CORE + ii*HWPE_WIDTH_FACT].r_opc;
+        assign hci_initiator_hwpe[ii].r_ecc = hci_initiator_narrow[N_CORE + ii*HWPE_WIDTH_FACT].r_ecc;
+
+        // Reduction AND for gnt and valid signals coming back from
+        // TCDM, through multiple narrow ports, to one wide HWPE port
+        logic [HWPE_WIDTH_FACT-1:0] gnt_vec, rvalid_vec, egnt_vec, revalid_vec;
+
+        for (genvar f = 0; f < HWPE_WIDTH_FACT; f++) begin
+          localparam int IDX = N_CORE + ii*HWPE_WIDTH_FACT + f;
+          assign gnt_vec[f] = hci_initiator_narrow[IDX].gnt;
+          assign rvalid_vec[f] = hci_initiator_narrow[IDX].r_valid;
+          assign egnt_vec[f] = hci_initiator_narrow[IDX].egnt;
+          assign revalid_vec[f] = hci_initiator_narrow[IDX].r_evalid;
+        end
+
+        assign hci_initiator_hwpe[ii].gnt      = &gnt_vec;
+        assign hci_initiator_hwpe[ii].r_valid  = &rvalid_vec;
+        assign hci_initiator_hwpe[ii].egnt     = &egnt_vec;
+        assign hci_initiator_hwpe[ii].r_evalid = &revalid_vec;
+      end
     end
   endgenerate
 
