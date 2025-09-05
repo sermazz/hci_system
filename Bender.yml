@@ -14,6 +14,7 @@ dependencies:
   hci: { git: "https://github.com/pulp-platform/hci.git", rev: 5421524afca701e45a83d0f1ec47568c019e021a } # branch: master
   hwpe-ctrl: { git: "https://github.com/pulp-platform/hwpe-ctrl.git", version: 2.0 }
   datamover: { git: "https://github.com/pulp-platform/datamover.git", rev: 5df9c9bd9e10ad020763c4291c571adf35ef4ae2 } # branch: transpose
+  hci_system_asic: { path: "target/asic" }
 
 sources:
   # Level 0

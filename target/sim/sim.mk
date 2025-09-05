@@ -14,10 +14,10 @@ sim_top_level ?= tb_hci_system
 #############
 
 # Tooling
-QUESTA ?= questa-2022.3
-VLIB ?= $(QUESTA) vlib
-VSIM ?= $(QUESTA) vsim
-VOPT ?= $(QUESTA) vopt
+SIM_QUESTA ?= questa-2022.3
+SIM_VLIB ?= $(SIM_QUESTA) vlib
+SIM_VSIM ?= $(SIM_QUESTA) vsim
+SIM_VOPT ?= $(SIM_QUESTA) vopt
 
 # Parameters
 GUI ?= 0
@@ -31,10 +31,10 @@ SIM_HCI_VLOG_ARGS ?=
 SIM_HCI_VLOG_ARGS += -work $(sim_vsim_lib)
 # vopt optimization arguments
 SIM_HCI_VOPT_ARGS ?=
-SIM_HCI_VOPT_ARGS += $(SIM_QUESTA_SUPPRESS)
+SIM_HCI_VOPT_ARGS += $(SIM_QUESTA_SUPPRESS) -work $(sim_vsim_lib)
 # vsim simulation arguments
 SIM_HCI_VSIM_ARGS ?=
-SIM_HCI_VSIM_ARGS += $(SIM_QUESTA_SUPPRESS) +permissive +notimingchecks +nospecify -t 1ps
+SIM_HCI_VSIM_ARGS += $(SIM_QUESTA_SUPPRESS) -lib $(sim_vsim_lib) +permissive +notimingchecks +nospecify -t 1ps
 ifeq ($(GUI),0)
 	SIM_HCI_VSIM_ARGS += -c
 endif
@@ -46,21 +46,21 @@ $(HCI_SIM_DIR)/vsim/compile.tcl: $(HCI_ROOT)/Bender.lock $(HCI_ROOT)/Bender.yml 
 compile-vsim: $(sim_vsim_lib)/.hw_compiled
 $(sim_vsim_lib)/.hw_compiled: $(HCI_SIM_DIR)/vsim/compile.tcl $(HCI_ROOT)/.bender/.checkout_stamp $(SIM_SRC_FILES)
 	cd $(HCI_SIM_DIR)/vsim && \
-	$(VLIB) $(sim_vsim_lib) && \
-	$(VSIM) -c -do 'quit -code [source $<]' && \
+	$(SIM_VLIB) $(sim_vsim_lib) && \
+	$(SIM_VSIM) -c -do 'quit -code [source $<]' && \
 	date > $@
 
 .PHONY: opt-vsim
 opt-vsim: $(sim_vsim_lib)/$(sim_top_level)_optimized/.tb_opt_compiled
 $(sim_vsim_lib)/$(sim_top_level)_optimized/.tb_opt_compiled: $(sim_vsim_lib)/.hw_compiled
 	cd $(HCI_SIM_DIR)/vsim && \
-	$(VOPT) $(SIM_HCI_VOPT_ARGS) -work $(sim_vsim_lib) $(sim_top_level) -o $(sim_top_level)_optimized +acc && \
+	$(SIM_VOPT) $(SIM_HCI_VOPT_ARGS) $(sim_top_level) -o $(sim_top_level)_optimized +acc && \
 	date > $@
 
 .PHONY: run-vsim
 run-vsim: $(sim_vsim_lib)/$(sim_top_level)_optimized/.tb_opt_compiled
 	cd $(HCI_SIM_DIR)/vsim && \
-	$(VSIM) $(SIM_HCI_VSIM_ARGS) -lib $(sim_vsim_lib) \
+	$(SIM_VSIM) $(SIM_HCI_VSIM_ARGS) \
 	$(sim_top_level)_optimized \
 	-do 'set GUI $(GUI); source $(HCI_SIM_DIR)/vsim/$(sim_top_level).tcl'
 

@@ -57,6 +57,12 @@ packages:
     - l2_tcdm_hybrid_interco
     - redundancy_cells
     - register_interface
+  hci_system_asic:
+    revision: null
+    version: null
+    source:
+      Path: target/asic
+    dependencies: []
   hwpe-ctrl:
     revision: 3690a3c648f120546d8de2bc583d5170c36d2f20
     version: 2.0.0

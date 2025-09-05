@@ -30,3 +30,13 @@ $(HCI_ROOT)/.bender/.checkout_stamp: $(HCI_ROOT)/Bender.lock
 include $(HCI_ROOT)/hw/hw.mk
 include $(HCI_ROOT)/test/test.mk
 include $(HCI_ROOT)/target/sim/sim.mk
+
+# Nonfree targets
+ASIC_REMOTE ?= git@iis-git.ee.ethz.ch:pulp-restricted/hci_system_asic.git
+ASIC_REV    ?= deploy
+
+asic-init:
+	git clone $(ASIC_REMOTE) target/asic
+	cd target/asic && git checkout $(ASIC_REV)
+
+-include $(HCI_ROOT)/target/asic/asic.mk
