@@ -50,10 +50,9 @@ package hci_system_pkg;
   // In this system we use datamovers as cores and HWPE
   localparam int unsigned N_DATAMOVERS = N_CORE + N_HWPE;
 
-  localparam int unsigned IW = N_NARROW_HCI + N_WIDE_HCI + N_DMA + N_EXT; // One-hot slave ID width
+  localparam int unsigned IW = N_NARROW_HCI + N_WIDE_HCI + N_DMA + N_EXT;       // One-hot slave ID width
   localparam int unsigned FILTER_WRITE_R_VALID[0:N_WIDE_HCI-1] = '{default: 0}; // Enable filtering of only r_valid respons
-  localparam int unsigned TCDM_SIZE = N_BANKS * BANK_SIZE;                // Total TCDM size in bytes
-
+  localparam int unsigned TCDM_SIZE = N_BANKS * BANK_SIZE;                      // Total TCDM size in bytes
 
   ///////////////
   // Bitwidths //

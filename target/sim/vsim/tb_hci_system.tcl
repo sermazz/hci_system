@@ -9,7 +9,7 @@ log -r /*
 if {$GUI == 1} {
     add wave -noupdate /tb_hci_system/s_clk
     add wave -noupdate /tb_hci_system/s_rst_n
-
+    # Parameters
     add wave -noupdate -group params /hci_system_pkg/N_HWPE
     add wave -noupdate -group params /hci_system_pkg/N_CORE
     add wave -noupdate -group params /hci_system_pkg/HWPE_WIDTH_FACT
@@ -49,7 +49,7 @@ if {$GUI == 1} {
     add wave -noupdate -group params /hci_system_pkg/IW_mems
     add wave -noupdate -group params /hci_system_pkg/EW_mems
     add wave -noupdate -group params /hci_system_pkg/EHW_mems
-
+    # HCI system params
     add wave -noupdate -group hci_system -group params /tb_hci_system/i_dut/WAIVE_RQ3_ASSERT
     add wave -noupdate -group hci_system -group params /tb_hci_system/i_dut/WAIVE_RQ4_ASSERT
     add wave -noupdate -group hci_system -group params /tb_hci_system/i_dut/WAIVE_RSP3_ASSERT
@@ -58,7 +58,7 @@ if {$GUI == 1} {
     add wave -noupdate -group hci_system -group params /tb_hci_system/i_dut/HCI_SIZE_mems
     add wave -noupdate -group hci_system -group params /tb_hci_system/i_dut/HCI_SIZE_hwpe
     add wave -noupdate -group hci_system -group params /tb_hci_system/i_dut/N_WORDS
-
+    # HCI system signals
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/clk_i
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/rst_ni
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/clear_i
@@ -85,20 +85,45 @@ if {$GUI == 1} {
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/ext_tcdm_r_valid_o
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/ext_tcdm_r_ready_i
 
+    add wave -noupdate -divider "HCI Interfaces"
+    # HCI port interfaces
+    add wave -noupdate -group hci_initiator_narrow -divider Cores
+    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_CORE]} {incr i} {
+        add wave -noupdate -group hci_initiator_narrow -group narrow_$i /tb_hci_system/i_dut/hci_initiator_narrow[$i]/*
+    }
+    if {[examine -radix binary /hci_system_pkg/USE_HCI]} {
+        for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_WIDE_HCI]} {incr i} {
+            add wave -noupdate -group hci_initiator_wide -group wide_$i /tb_hci_system/i_dut/hci_initiator_wide[$i]/*
+        }
+    } {
+        for {set j 0} {$j < [examine -radix dec /hci_system_pkg/N_HWPE]} {incr j} {
+            add wave -noupdate -group hci_initiator_narrow -divider HWPE_$j
+            for {set f 0} {$f < [examine -radix dec /hci_system_pkg/HWPE_WIDTH_FACT]} {incr f} {
+                add wave -noupdate -group hci_initiator_narrow -group narrow_[expr [examine -radix dec /hci_system_pkg/N_CORE]+$j*[examine -radix dec /hci_system_pkg/HWPE_WIDTH_FACT]+$f] /tb_hci_system/i_dut/hci_initiator_narrow[$j]/*
+            }
+        }
+    }
+    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_EXT]} {incr i} {
+        add wave -noupdate -group hci_initiator_ext -group ext_$i /tb_hci_system/i_dut/hci_initiator_ext[$i]/*
+    }
+    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_BANKS]} {incr i} {
+        add wave -noupdate -group hci_target_mems -group mem_$i /tb_hci_system/i_dut/hci_target_mems[$i]/*
+    }
+
+    add wave -noupdate -divider "Initiators & targets"
+    # Core narrow ports
+    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_CORE]} {incr i} {
+        add wave -noupdate -group hci_core_if -group core_$i /tb_hci_system/i_dut/hci_core_if[$i]/*
+    }
+    # HWPE wide ports
+    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_HWPE]} {incr i} {
+        add wave -noupdate -group hci_hwpe_if -group hwpe_$i /tb_hci_system/i_dut/hci_hwpe_if[$i]/*
+    }
+
+    # TCDM banks
     for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_BANKS]} {incr i} {
         add wave -noupdate -group tcdm_banks -label bank_$i /tb_hci_system/i_dut/i_tcdm/gen_banks[$i]/i_bank/sram
     }
 
-    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_NARROW_HCI]} {incr i} {
-        add wave -noupdate -group hci_initiator_core_if -group core_$i /tb_hci_system/i_dut/hci_initiator_narrow[$i]/*
-    }
-    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_EXT]} {incr i} {
-        add wave -noupdate -group hci_initiator_ext_if -group ext_$i /tb_hci_system/i_dut/hci_initiator_ext[$i]/*
-    }
-    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_HWPE]} {incr i} {
-        add wave -noupdate -group hci_initiator_hwpe_if -group hwpe_$i /tb_hci_system/i_dut/hci_initiator_hwpe[$i]/*
-    }
-    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_BANKS]} {incr i} {
-        add wave -noupdate -group hci_target_mems_if -group mems_$i /tb_hci_system/i_dut/hci_target_mems[$i]/*
-    }
+    configure wave -signalnamewidth 1
 }
