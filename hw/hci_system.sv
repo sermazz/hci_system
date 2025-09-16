@@ -24,6 +24,8 @@ module hci_system
   input logic [1:0]                    arb_policy_i,
   input logic                          invert_prio_i,
   input logic [7:0]                    low_prio_max_stall_i,
+  // Static HWPE muxing (if enabled)
+  input logic [HWPE_SEL_WIDTH-1:0]     hwpe_sel_i,
   // Peripheral interconnect interface for programming
   input  logic                         periph_req_i,
   output logic                         periph_gnt_o,
@@ -71,7 +73,7 @@ module hci_system
     .clk( clk_i )
   );
 
-  /* Narrow HCI interfaces (cores, EXT + HWPE when !USE_HCI) */
+  /* Narrow HCI interfaces (cores, EXT + if HCI is being used, also count N_HWPE) */
 
   localparam hci_package::hci_size_parameter_t `HCI_SIZE_PARAM(cores) = '{
     DW:  DW_cores,
@@ -121,7 +123,7 @@ module hci_system
     .clk( clk_i )
   );
 
-  /* Wide interfaces for HWPE (when USE_HCI) */
+  /* Wide interfaces for HWPE (1 when static mux is used, otherwise for HCI, use N_HWPE) */
 
   localparam hci_package::hci_size_parameter_t `HCI_SIZE_PARAM(hwpe) = '{
     DW:  DW_hwpe,
@@ -254,8 +256,9 @@ module hci_system
   );
 
   // HWPE Datamover uses at most 9 bits for addressing configuration registers
-  // Here, in the periph demux we use a static number of address MSBs to select the master to configure
-  // The number of employed MSBs is clog2(MAX_N_DATAMOVERS). In this configuration, 8 bits are used.
+  // Here, in the periph demux we use a static number of address MSBs to select the master to configure;
+  // this is the equivalent of setting up an address map, but easier.
+  // The number of employed MSBs is clog2(MAX_N_DATAMOVERS).
 
   hwpe_ctrl_periph_demux #(
     .N_PORTS ( N_DATAMOVERS ),
@@ -384,16 +387,43 @@ module hci_system
         // TCDM interface, to bind to HCI interface
         .tcdm ( hci_hwpe_if[ii] ),
         .periph ( periph_target_datamovers[N_CORE + ii] )
-      );
 
-      /* If HCI is used, just forward HWPE port to wide HCI port */
-      if (USE_HCI) begin
+      );
+    end
+  endgenerate
+
+  generate
+    // HCI is used: just forward HWPE port to wide HCI port
+    // ----------------------------------------------------
+    if (INTERCO == "hci") begin: gen_hwpe_assign
+      for (genvar ii = 0; ii < N_HWPE; ii++) begin
         hci_core_assign i_hci_hwpe_assign (
           .tcdm_target ( hci_hwpe_if[ii] ),
           .tcdm_initiator ( hci_initiator_wide[ii] )
         );
-      /* If fully log interco is used, split the wide HWPE port over multiple narrow HCI ports */
-      end else begin
+      end
+    end //gen_hwpe_assign
+
+    // Static mux is used: mux all HWPE ports into one wide HCI port
+    // -------------------------------------------------------------
+    else if (INTERCO == "smux") begin: gen_hwpe_smux
+      hci_core_mux_static #(
+        .NB_CHAN ( N_HWPE ),
+        .`HCI_SIZE_PARAM(in) ( `HCI_SIZE_PARAM(hwpe) )
+      ) i_hwpe_smux (
+        .clk_i ( clk_i ),
+        .rst_ni ( rst_ni ),
+        .clear_i ( clear_i ),
+        .sel_i ( hwpe_sel_i[$clog2(N_HWPE-1):0] ),
+        .in ( hci_hwpe_if ),
+        .out ( hci_initiator_wide[0] )
+      );
+    end //gen_hwpe_smux
+
+    // Fully log interco: split wide HWPE port over multiple narrow HCI ports
+    // ----------------------------------------------------------------------
+    else if (INTERCO == "log") begin: gen_hwpe_split
+      for (genvar ii = 0; ii < N_HWPE; ii++) begin
         // Route the wide ports of the datamovers to each additional set of HWPE_WIDTH_FACT narrow core ports
         for (genvar f = 0; f < HWPE_WIDTH_FACT; f++) begin
           localparam int IDX = N_CORE + ii*HWPE_WIDTH_FACT + f;
@@ -434,7 +464,7 @@ module hci_system
         assign hci_hwpe_if[ii].egnt     = &egnt_vec;
         assign hci_hwpe_if[ii].r_evalid = &revalid_vec;
       end
-    end
+    end //gen_hwpe_split
   endgenerate
 
   /////////////////////
@@ -463,6 +493,10 @@ module hci_system
       check_n_datamovers: assert (N_DATAMOVERS <= MAX_N_DATAMOVERS)
       else begin
         $error("[ASSERT FAILED] [%m] N_DATAMOVERS %0d must be at most %0d (%s:%0d)", N_DATAMOVERS, MAX_N_DATAMOVERS, `__FILE__, `__LINE__);
+      end
+      check_n_hwpe_smux: assert (INTERCO != "smux" || N_HWPE > 1)
+      else begin
+        $error("[ASSERT FAILED] [%m] If using static multiplexing, it does not make sense to have N_HWPE (%0d) <= 1 (%s:%0d)", N_HWPE, `__FILE__, `__LINE__);
       end
     end
   `endif

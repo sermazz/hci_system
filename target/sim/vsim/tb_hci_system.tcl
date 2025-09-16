@@ -15,19 +15,23 @@ if {$GUI == 1} {
     add wave -noupdate -group params /hci_system_pkg/HWPE_WIDTH_FACT
     add wave -noupdate -group params /hci_system_pkg/N_BANKS
     add wave -noupdate -group params /hci_system_pkg/BANK_SIZE
-    add wave -noupdate -group params /hci_system_pkg/USE_HCI
     add wave -noupdate -group params /hci_system_pkg/SEL_LIC
+
     add wave -noupdate -group params /hci_system_pkg/N_DMA
     add wave -noupdate -group params /hci_system_pkg/N_EXT
     add wave -noupdate -group params /hci_system_pkg/ID_PERIPH
     add wave -noupdate -group params /hci_system_pkg/MAX_N_DATAMOVERS
     add wave -noupdate -group params /hci_system_pkg/TS_BIT
     add wave -noupdate -group params /hci_system_pkg/EXPFIFO
+    add wave -noupdate -group params /hci_system_pkg/WORD_SIZE
+    add wave -noupdate -group params /hci_system_pkg/HWPE_SEL_WIDTH
+
     add wave -noupdate -group params /hci_system_pkg/N_NARROW_HCI
     add wave -noupdate -group params /hci_system_pkg/N_WIDE_HCI
     add wave -noupdate -group params /hci_system_pkg/N_DATAMOVERS
     add wave -noupdate -group params /hci_system_pkg/IW
     add wave -noupdate -group params /hci_system_pkg/TCDM_SIZE
+
     add wave -noupdate -group params /hci_system_pkg/DW_cores
     add wave -noupdate -group params /hci_system_pkg/AW_cores
     add wave -noupdate -group params /hci_system_pkg/BW_cores
@@ -65,6 +69,7 @@ if {$GUI == 1} {
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/arb_policy_i
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/invert_prio_i
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/low_prio_max_stall_i
+    add wave -noupdate -group hci_system /tb_hci_system/i_dut/hwpe_sel_i
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/periph_req_i
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/periph_gnt_o
     add wave -noupdate -group hci_system /tb_hci_system/i_dut/periph_add_i
@@ -87,11 +92,15 @@ if {$GUI == 1} {
 
     add wave -noupdate -divider "HCI Interfaces"
     # HCI port interfaces
+    add wave -noupdate -group hci_initiator_narrow -divider External
+    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_EXT]} {incr i} {
+        add wave -noupdate -group hci_initiator_narrow -group ext_$i /tb_hci_system/i_dut/hci_initiator_ext[$i]/*
+    }
     add wave -noupdate -group hci_initiator_narrow -divider Cores
     for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_CORE]} {incr i} {
         add wave -noupdate -group hci_initiator_narrow -group narrow_$i /tb_hci_system/i_dut/hci_initiator_narrow[$i]/*
     }
-    if {[examine -radix binary /hci_system_pkg/USE_HCI]} {
+    if {[examine /hci_system_pkg/INTERCO] == "hci" || [examine /hci_system_pkg/INTERCO] == "smux"} {
         for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_WIDE_HCI]} {incr i} {
             add wave -noupdate -group hci_initiator_wide -group wide_$i /tb_hci_system/i_dut/hci_initiator_wide[$i]/*
         }
@@ -102,9 +111,6 @@ if {$GUI == 1} {
                 add wave -noupdate -group hci_initiator_narrow -group narrow_[expr [examine -radix dec /hci_system_pkg/N_CORE]+$j*[examine -radix dec /hci_system_pkg/HWPE_WIDTH_FACT]+$f] /tb_hci_system/i_dut/hci_initiator_narrow[$j]/*
             }
         }
-    }
-    for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_EXT]} {incr i} {
-        add wave -noupdate -group hci_initiator_ext -group ext_$i /tb_hci_system/i_dut/hci_initiator_ext[$i]/*
     }
     for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_BANKS]} {incr i} {
         add wave -noupdate -group hci_target_mems -group mem_$i /tb_hci_system/i_dut/hci_target_mems[$i]/*
@@ -118,6 +124,17 @@ if {$GUI == 1} {
     # HWPE wide ports
     for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_HWPE]} {incr i} {
         add wave -noupdate -group hci_hwpe_if -group hwpe_$i /tb_hci_system/i_dut/hci_hwpe_if[$i]/*
+    }
+
+    # HWPE static mux
+    if {[examine /hci_system_pkg/INTERCO] == "smux"} {
+        add wave -noupdate -expand -group hwpe_smux /tb_hci_system/i_dut/gen_hwpe_smux/i_hwpe_smux/clk_i
+        add wave -noupdate -expand -group hwpe_smux /tb_hci_system/i_dut/gen_hwpe_smux/i_hwpe_smux/rst_ni
+        add wave -noupdate -expand -group hwpe_smux /tb_hci_system/i_dut/gen_hwpe_smux/i_hwpe_smux/sel_i
+        for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_HWPE]} {incr i} {
+            add wave -noupdate -expand -group hwpe_smux -group in_$i /tb_hci_system/i_dut/gen_hwpe_smux/i_hwpe_smux/in[$i]/*
+        }
+        add wave -noupdate -expand -group hwpe_smux -group out /tb_hci_system/i_dut/gen_hwpe_smux/i_hwpe_smux/out/*
     }
 
     # TCDM banks

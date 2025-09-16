@@ -24,6 +24,7 @@ module tb_hci_system
   logic [1:0]           s_arb_policy;
   logic                 s_invert_prio;
   logic [7:0]           s_low_prio_max_stall;
+  logic [HWPE_SEL_WIDTH-1:0] s_hwpe_sel;
 
   logic                 s_periph_req;
   logic                 s_periph_gnt;
@@ -67,6 +68,7 @@ module tb_hci_system
     .arb_policy_i ( s_arb_policy ),
     .invert_prio_i ( s_invert_prio ),
     .low_prio_max_stall_i ( s_low_prio_max_stall ),
+    .hwpe_sel_i ( s_hwpe_sel ),
     .periph_req_i ( s_periph_req ),
     .periph_gnt_o ( s_periph_gnt ),
     .periph_add_i ( s_periph_add ),
@@ -109,6 +111,8 @@ module tb_hci_system
   // Test //
   //////////
 
+  //TODO: This testbench does not currently test the INTERCO == "smux" case
+
   initial begin
     logic [31:0] status;
     logic [31:0] dm_offset;
@@ -127,6 +131,7 @@ module tb_hci_system
     s_low_prio_max_stall = 8'd5;
     // Clear all inputs
     s_clear = 1'b0;
+    s_hwpe_sel = 'd0;
     // Peripheral interface
     periph_if.req = '0;
     periph_if.add = '0;
