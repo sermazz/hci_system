@@ -7,6 +7,17 @@
 
 package hci_system_pkg;
 
+  ///////////
+  // Types //
+  ///////////
+
+  // Define enum type for INTERCO
+  typedef enum logic [1:0] {
+    LOG  = 2'd0,
+    SMUX = 2'd1,
+    HCI  = 2'd2
+  } interco_e;
+
   /////////////////////////////
   // Configurable parameters //
   /////////////////////////////
@@ -22,7 +33,7 @@ package hci_system_pkg;
   localparam int unsigned BANK_SIZE =  `ifdef BANK_SIZE `BANK_SIZE `else 2048 `endif;                // Bank size in bytes
   // Interconnect parameters
   localparam int unsigned SEL_LIC =  `ifdef SEL_LIC `SEL_LIC `else 0 `endif;                         // Log interconnect type selector
-  localparam string       INTERCO =  `ifdef INTERCO `INTERCO `else "log" `endif;                     // Use fully log, static mux for HWPEs, or full HCI
+  localparam interco_e    INTERCO =  `ifdef INTERCO `INTERCO `else LOG `endif;                       // Use fully log, static mux for HWPEs, or full HCI
 
   //////////////////////////
   // Hardcoded parameters //
@@ -46,9 +57,9 @@ package hci_system_pkg;
   //////////////////////////
 
   // If fully log interco is used, instantiate additional HWPE_WIDTH_FACT narrow core ports for each HWPE
-  localparam int unsigned N_NARROW_HCI = N_CORE + (N_HWPE * HWPE_WIDTH_FACT) * (INTERCO == "log");
+  localparam int unsigned N_NARROW_HCI = N_CORE + (N_HWPE * HWPE_WIDTH_FACT) * (INTERCO == LOG);
   // If HCI is used, instantiate one dedicated wide port for each HWPE
-  localparam int unsigned N_WIDE_HCI = INTERCO == "hci" ? N_HWPE : (INTERCO == "smux" ? 1 : 0);
+  localparam int unsigned N_WIDE_HCI = INTERCO == HCI ? N_HWPE : (INTERCO == SMUX ? 1 : 0);
 
   // In this system we use datamovers as cores and HWPE
   localparam int unsigned N_DATAMOVERS = N_CORE + N_HWPE;

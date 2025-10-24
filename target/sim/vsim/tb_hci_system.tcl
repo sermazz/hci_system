@@ -100,7 +100,7 @@ if {$GUI == 1} {
     for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_CORE]} {incr i} {
         add wave -noupdate -group hci_initiator_narrow -group narrow_$i /tb_hci_system/i_dut/hci_initiator_narrow[$i]/*
     }
-    if {[examine /hci_system_pkg/INTERCO] == "hci" || [examine /hci_system_pkg/INTERCO] == "smux"} {
+    if {[examine /hci_system_pkg/INTERCO] == {HCI} || [examine /hci_system_pkg/INTERCO] == {SMUX}} {
         for {set i 0} {$i < [examine -radix dec /hci_system_pkg/N_WIDE_HCI]} {incr i} {
             add wave -noupdate -group hci_initiator_wide -group wide_$i /tb_hci_system/i_dut/hci_initiator_wide[$i]/*
         }
@@ -127,7 +127,7 @@ if {$GUI == 1} {
     }
 
     # HWPE static mux
-    if {[examine /hci_system_pkg/INTERCO] == "smux"} {
+    if {[examine /hci_system_pkg/INTERCO] == {SMUX}} {
         add wave -noupdate -expand -group hwpe_smux /tb_hci_system/i_dut/gen_hwpe_smux/i_hwpe_smux/clk_i
         add wave -noupdate -expand -group hwpe_smux /tb_hci_system/i_dut/gen_hwpe_smux/i_hwpe_smux/rst_ni
         add wave -noupdate -expand -group hwpe_smux /tb_hci_system/i_dut/gen_hwpe_smux/i_hwpe_smux/sel_i

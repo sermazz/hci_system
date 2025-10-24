@@ -11,10 +11,10 @@ N_BANKS ?= 16
 BANK_SIZE ?= 1024
 SEL_LIC ?= 0
 # Interco type, can be:
-# - log: fully logarithmic interconnect
-# - smux: HCI with only 1 wide port at the shallow branch, multiple HWPEs are muxed
-# - hci: full HCI with multiple wide ports at the shallow branch
-INTERCO ?= smux
+# - LOG: fully logarithmic interconnect
+# - SMUX: HCI with only 1 wide port at the shallow branch, multiple HWPEs are muxed
+# - HCI: full HCI with multiple wide ports at the shallow branch
+INTERCO ?= SMUX
 
 
 #########################
@@ -31,4 +31,4 @@ HW_CFG_DEFS += -D HWPE_WIDTH_FACT=$(HWPE_WIDTH_FACT)
 HW_CFG_DEFS += -D N_BANKS=$(N_BANKS)
 HW_CFG_DEFS += -D BANK_SIZE=$(BANK_SIZE)
 HW_CFG_DEFS += -D SEL_LIC=$(SEL_LIC)
-HW_CFG_DEFS += -D INTERCO=\\\"$(INTERCO)\\\"
+HW_CFG_DEFS += -D INTERCO=$(INTERCO)

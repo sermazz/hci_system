@@ -395,7 +395,7 @@ module hci_system
   generate
     // HCI is used: just forward HWPE port to wide HCI port
     // ----------------------------------------------------
-    if (INTERCO == "hci") begin: gen_hwpe_assign
+    if (INTERCO == HCI) begin: gen_hwpe_assign
       for (genvar ii = 0; ii < N_HWPE; ii++) begin
         hci_core_assign i_hci_hwpe_assign (
           .tcdm_target ( hci_hwpe_if[ii] ),
@@ -406,7 +406,7 @@ module hci_system
 
     // Static mux is used: mux all HWPE ports into one wide HCI port
     // -------------------------------------------------------------
-    else if (INTERCO == "smux") begin: gen_hwpe_smux
+    else if (INTERCO == SMUX) begin: gen_hwpe_smux
       hci_core_mux_static #(
         .NB_CHAN ( N_HWPE ),
         .`HCI_SIZE_PARAM(in) ( `HCI_SIZE_PARAM(hwpe) )
@@ -422,7 +422,7 @@ module hci_system
 
     // Fully log interco: split wide HWPE port over multiple narrow HCI ports
     // ----------------------------------------------------------------------
-    else if (INTERCO == "log") begin: gen_hwpe_split
+    else if (INTERCO == LOG) begin: gen_hwpe_split
       for (genvar ii = 0; ii < N_HWPE; ii++) begin
         // Route the wide ports of the datamovers to each additional set of HWPE_WIDTH_FACT narrow core ports
         for (genvar f = 0; f < HWPE_WIDTH_FACT; f++) begin
@@ -494,7 +494,7 @@ module hci_system
       else begin
         $error("[ASSERT FAILED] [%m] N_DATAMOVERS %0d must be at most %0d (%s:%0d)", N_DATAMOVERS, MAX_N_DATAMOVERS, `__FILE__, `__LINE__);
       end
-      check_n_hwpe_smux: assert (INTERCO != "smux" || N_HWPE > 1)
+      check_n_hwpe_smux: assert (INTERCO != SMUX || N_HWPE > 1)
       else begin
         $error("[ASSERT FAILED] [%m] If using static multiplexing, it does not make sense to have N_HWPE (%0d) <= 1 (%s:%0d)", N_HWPE, `__FILE__, `__LINE__);
       end
