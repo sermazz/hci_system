@@ -131,6 +131,7 @@ module tb_hci_system
     s_low_prio_max_stall = 8'd5;
     // Clear all inputs
     s_clear = 1'b0;
+    //TODO: Implement s_hwpe_sel for correct testing of `INTERCO==SMUX` case (e.g., blind round-robin among HWPEs, or request-based)
     s_hwpe_sel = 'd0;
     // Peripheral interface
     periph_if.req = '0;

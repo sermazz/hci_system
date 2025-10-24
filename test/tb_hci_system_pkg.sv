@@ -23,18 +23,19 @@ package tb_hci_system_pkg;
   // Datamover config //
   //////////////////////
 
-  // Dimension lengths (in words)
+  // Number of accesses over each dimension (pure number)
   localparam logic [11:0] dm_core_in_d0_len = 15;
   localparam logic [11:0] dm_core_in_d1_len = 0;
   localparam logic [11:0] dm_core_out_d0_len = 15;
   localparam logic [11:0] dm_core_out_d1_len = 0;
   localparam logic [11:0] dm_core_tot_len = 15;
-
-  // In bytes
-  localparam logic [31:0] DM_CORE_IN_PTR = 0; // input base address
-  localparam logic [31:0] DM_CORE_OUT_PTR = 1 * WORD_SIZE; // output base address
   localparam logic [31:0] DM_CORE_LEN0 = {dm_core_in_d1_len[7:0], dm_core_in_d0_len, dm_core_tot_len}; // length register 0
   localparam logic [31:0] DM_CORE_LEN1 = {dm_core_in_d1_len[11:8], dm_core_out_d1_len, dm_core_out_d0_len}; // length register 1
+
+  // In bytes
+  //NOTE: Actual base addresses computed directly in `tb_hci_system.sv`
+  localparam logic [31:0] DM_CORE_IN_PTR = 0; // input base address
+  localparam logic [31:0] DM_CORE_OUT_PTR = 1 * WORD_SIZE; // output base address
   localparam logic [31:0] DM_CORE_IN_D0_STRIDE = (N_BANKS) * WORD_SIZE; // dim 0 read stride
   localparam logic [31:0] DM_CORE_IN_D1_STRIDE = 0; // dim 1 read stride
   localparam logic [31:0] DM_CORE_IN_D2_STRIDE = 0; // dim 2 read stride
@@ -43,18 +44,19 @@ package tb_hci_system_pkg;
   localparam logic [31:0] DM_CORE_OUT_D2_STRIDE = 0; // dim 2 write stride
   localparam logic [31:0] DM_CORE_TRANSP_MODE = {29'b0, 3'b000}; // transpose mode (i.e., element width)
 
-  // Dimension lengths (in HWPE words)
+  // Number of accesses over each dimension (pure number)
   localparam logic [11:0] dm_hwpe_in_d0_len = 2;
   localparam logic [11:0] dm_hwpe_in_d1_len = 0;
   localparam logic [11:0] dm_hwpe_out_d0_len = 2;
   localparam logic [11:0] dm_hwpe_out_d1_len = 0;
   localparam logic [11:0] dm_hwpe_tot_len = 2;
-
-  // In bytes
-  localparam logic [31:0] DM_HWPE_IN_PTR = N_BANKS * 20 * WORD_SIZE; // input base address
-  localparam logic [31:0] DM_HWPE_OUT_PTR = N_BANKS * 20 * WORD_SIZE + HWPE_WIDTH_FACT * WORD_SIZE; // output base address
   localparam logic [31:0] DM_HWPE_LEN0 = {dm_hwpe_in_d1_len[7:0], dm_hwpe_in_d0_len, dm_hwpe_tot_len}; // length register 0
   localparam logic [31:0] DM_HWPE_LEN1 = {dm_hwpe_in_d1_len[11:8], dm_hwpe_out_d1_len, dm_hwpe_out_d0_len}; // length register 1
+
+  // In bytes
+  //NOTE: Actual base addresses computed directly in `tb_hci_system.sv`
+  localparam logic [31:0] DM_HWPE_IN_PTR = N_BANKS * 20 * WORD_SIZE; // input base address
+  localparam logic [31:0] DM_HWPE_OUT_PTR = N_BANKS * 20 * WORD_SIZE + HWPE_WIDTH_FACT * WORD_SIZE; // output base address
   localparam logic [31:0] DM_HWPE_IN_D0_STRIDE = (N_BANKS) * WORD_SIZE; // dim 0 read stride
   localparam logic [31:0] DM_HWPE_IN_D1_STRIDE = 0; // dim 1 read stride
   localparam logic [31:0] DM_HWPE_IN_D2_STRIDE = 0; // dim 2 read stride
