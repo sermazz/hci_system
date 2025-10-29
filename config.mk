@@ -4,17 +4,17 @@
 #
 # Sergio Mazzola <smazzola@iis.ee.ethz.ch>
 
-N_HWPE ?= 8
+N_HWPE ?= 2
 N_CORE ?= 8
 HWPE_WIDTH_FACT ?= 8
 N_BANKS ?= 16
-BANK_SIZE ?= 1024
+BANK_SIZE ?= 8192
 SEL_LIC ?= 0
 # Interco type, can be:
 # - LOG: fully logarithmic interconnect
 # - SMUX: HCI with only 1 wide port at the shallow branch, multiple HWPEs are muxed
 # - HCI: full HCI with multiple wide ports at the shallow branch
-INTERCO ?= SMUX
+INTERCO ?= HCI
 
 
 #########################
