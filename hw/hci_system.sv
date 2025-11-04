@@ -329,7 +329,7 @@ module hci_system
         .ID ( ID_PERIPH ),
         .BW ( DW_cores ),
         .N_CORES ( 1 ),
-        .N_CONTEXT ( 2 ),
+        .N_CONTEXT ( 1 ),
         .MISALIGNED_ACCESSES ( 0 ),
         .`HCI_SIZE_PARAM(tcdm) ( `HCI_SIZE_PARAM(cores) )
       ) i_dm_narrow (
@@ -376,7 +376,7 @@ module hci_system
         .ID ( ID_PERIPH ),
         .BW ( DW_hwpe ),
         .N_CORES ( 1 ),
-        .N_CONTEXT ( 2 ),
+        .N_CONTEXT ( 1 ),
         .MISALIGNED_ACCESSES ( 0 ),
         .`HCI_SIZE_PARAM(tcdm) ( `HCI_SIZE_PARAM(hwpe) )
       ) i_dm_wide (

@@ -13,7 +13,7 @@ dependencies:
   tech_cells_generic: { git: "https://github.com/pulp-platform/tech_cells_generic.git", version: 0.2.2 }
   hci: { git: "https://github.com/pulp-platform/hci.git", rev: 5421524afca701e45a83d0f1ec47568c019e021a } # branch: master
   hwpe-ctrl: { git: "https://github.com/pulp-platform/hwpe-ctrl.git", rev: d63ee3ec17af9b0cce0640fa88475bfeb0c5c93d } # branch: master
-  datamover: { git: "https://github.com/pulp-platform/datamover.git", rev: 5df9c9bd9e10ad020763c4291c571adf35ef4ae2 } # branch: transpose
+  datamover: { git: "https://github.com/pulp-platform/datamover.git", rev: 3ec015f48cb8d8f0d3550aae617ce12b2c968dc0 } # branch: smazzola/temp-fix
   hci_system_asic: { path: "target/asic" }
 
 sources:
