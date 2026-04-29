@@ -4,11 +4,11 @@
 #
 # Sergio Mazzola <smazzola@iis.ee.ethz.ch>
 
-N_HWPE ?= 2
+N_HWPE ?= 4
 N_CORE ?= 8
 HWPE_WIDTH_FACT ?= 8
-N_BANKS ?= 16
-BANK_SIZE ?= 8192
+N_BANKS ?= 32
+BANK_SIZE ?= 4096
 SEL_LIC ?= 0
 # Interco type, can be:
 # - LOG: fully logarithmic interconnect
