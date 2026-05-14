@@ -1,4 +1,4 @@
-// Copyright 2025 ETH Zurich and University of Bologna.
+// Copyright 2026 ETH Zurich and University of Bologna.
 // Solderpad Hardware License, Version 0.51, see LICENSE.solderpad for details.
 // SPDX-License-Identifier: SHL-0.51
 //
@@ -9,6 +9,10 @@ timeunit 1ns;
 timeprecision 1ps;
 
 `include "hci_helpers.svh"
+
+`ifdef TARGET_ASIC
+`include "tcdm_asic_backdoor.svh"
+`endif
 
 module tb_hci_system
   import hci_package::*;
@@ -152,8 +156,22 @@ module tb_hci_system
     @(posedge s_rst_n);
     repeat (5) @(posedge s_clk);
     #TbTA;
-  
+
     $info("Initializing TCDM");
+`ifdef TARGET_ASIC
+    // Backdoor: force tc_sram ports directly on all N_BANKS in parallel,
+    // bypassing HCI interconnect (1 clock per word row instead of 1 per word total).
+    for (int j = 0; j < BANK_SIZE / WORD_SIZE; j++) begin
+      for (int i = 0; i < N_BANKS; i++) begin
+        ret = std::randomize(s_ext_tcdm_data); assert(ret);
+        tcdm_backdoor_force(i, j, s_ext_tcdm_data);
+      end
+      @(posedge s_clk);
+    end
+    for (int i = 0; i < N_BANKS; i++)
+      tcdm_backdoor_release(i);
+    repeat (5) @(posedge s_clk);
+`else
     s_ext_tcdm_req = 1'b1;
     s_ext_tcdm_wen = 1'b0; // wen = 0 for HCI protocol
     s_ext_tcdm_be = '1;
@@ -182,6 +200,7 @@ module tb_hci_system
     s_ext_tcdm_req = 1'b0;
     s_ext_tcdm_r_ready = '0;
     repeat (5) @(posedge s_clk);
+`endif
 
     $info("Soft clear of all datamover masters");
     for(int i = 0; i < N_DATAMOVERS; i++) begin

@@ -4,7 +4,10 @@
 #
 # Sergio Mazzola <smazzola@iis.ee.ethz.ch>
 
-N_HWPE ?= 4
+# Hardware configuration
+# ----------------------
+
+N_HWPE ?= 1
 N_CORE ?= 8
 HWPE_WIDTH_FACT ?= 8
 N_BANKS ?= 32
@@ -16,6 +19,10 @@ SEL_LIC ?= 0
 # - HCI: full HCI with multiple wide ports at the shallow branch
 INTERCO ?= HCI
 
+# Testbench configuration
+# -----------------------
+
+CLK_NS ?= 15
 
 #########################
 # Parameters generation #
@@ -32,3 +39,5 @@ HW_CFG_DEFS += -D N_BANKS=$(N_BANKS)
 HW_CFG_DEFS += -D BANK_SIZE=$(BANK_SIZE)
 HW_CFG_DEFS += -D SEL_LIC=$(SEL_LIC)
 HW_CFG_DEFS += -D INTERCO=$(INTERCO)
+
+HW_CFG_DEFS += -D CLK_NS=$(CLK_NS)

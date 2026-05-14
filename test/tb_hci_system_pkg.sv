@@ -1,4 +1,4 @@
-// Copyright 2025 ETH Zurich and University of Bologna.
+// Copyright 2026 ETH Zurich and University of Bologna.
 // Solderpad Hardware License, Version 0.51, see LICENSE.solderpad for details.
 // SPDX-License-Identifier: SHL-0.51
 //
@@ -12,10 +12,12 @@ package tb_hci_system_pkg;
   // Tb parameters //
   ///////////////////
 
-  localparam time CLK_PERIOD = 2ns; // `timeprecision 1ps` will convert this in ps
+  localparam time CLK_PERIOD = `ifdef CLK_NS `CLK_NS * 1ns `else 5ns `endif; // `timeprecision 1ps` will convert this in ps 
   localparam int unsigned RST_CYCLES = 10;
-  localparam real TbTA = 0.2; // in ns
-  localparam real TbTT = CLK_PERIOD/1000 - 0.2; // wait `#` needs ns because of `timeunit 1ns`
+  // CLK_PERIOD is `time` type: in real arithmetic it is in ps (timeprecision unit).
+  // Dividing by 1000 converts to ns (timeunit), which is what `#` delays expect.
+  localparam real TbTA = CLK_PERIOD/1000 * 0.1; // 10% into period, in ns
+  localparam real TbTT = CLK_PERIOD/1000 - TbTA; // 10% before next edge, in ns
 
   localparam int unsigned PERIPH_SEL_WIDTH = $clog2(MAX_N_DATAMOVERS);
 
@@ -171,5 +173,4 @@ package tb_hci_system_pkg;
     periph_bus.wen  = 1'b1;               // Return to default state
     periph_bus.be   = 4'b1111;            // Maintain byte enable
   endtask : periph_read
-
 endpackage
