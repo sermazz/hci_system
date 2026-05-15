@@ -256,6 +256,15 @@ module tb_hci_system
     end
 
     $info("Triggering datamovers");
+
+    if (VCD_ENABLE) begin
+      $info("VCD dumping enabled: dumping to file %s", VCD_FILE);
+      $dumpfile(VCD_FILE);
+      $dumpvars(0, i_dut);
+    end else begin
+      $info("VCD dumping disabled");
+    end
+
     for(int i = 0; i < N_DATAMOVERS; i++) begin
       $info("Triggering datamover %0d", i);
       dm_offset = { i[PERIPH_SEL_WIDTH-1:0], {(32-PERIPH_SEL_WIDTH){1'b0}} };
@@ -279,6 +288,10 @@ module tb_hci_system
       repeat(20) @(posedge s_clk);
     end
 
+    if (VCD_ENABLE) begin
+      $info("VCD dumping done, flushing... ", VCD_FILE);
+      $dumpflush;
+    end
     repeat(20) @(posedge s_clk);
     $info("Simulation ended");
     $finish();

@@ -21,6 +21,10 @@ package tb_hci_system_pkg;
 
   localparam int unsigned PERIPH_SEL_WIDTH = $clog2(MAX_N_DATAMOVERS);
 
+  // VCD dumping
+  localparam int unsigned VCD_ENABLE = `ifdef VCD `VCD `else 0 `endif;
+  localparam string VCD_FILE = `ifdef VCD_FILE `VCD_FILE `else "dump.vcd" `endif;
+
   //////////////////////
   // Datamover config //
   //////////////////////
