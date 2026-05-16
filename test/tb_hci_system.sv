@@ -121,7 +121,8 @@ module tb_hci_system
     logic [31:0] status;
     logic [31:0] dm_offset;
     logic [N_DATAMOVERS-1:0] dm_done;
-    int i_hwpe;
+    int i_hwpe, gemm_idx;
+    logic [31:0] hwpe_in_base, hwpe_out_base;
     automatic logic ret;
 
     $info("Starting test");
@@ -217,9 +218,13 @@ module tb_hci_system
         periph_read(dm_offset + datamover_package::HWPE_REGISTER_OFFS, datamover_package::DATAMOVER_ACQUIRE, status, s_clk, periph_if);
 
       if (i < N_CORE) begin
+        // Set up CORES
         $info("Configuring core datamover %0d", i);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_PTR, DM_CORE_IN_PTR + N_BANKS*WORD_SIZE*dm_core_in_d0_len*i, s_clk, periph_if);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_PTR, DM_CORE_OUT_PTR + N_BANKS*WORD_SIZE*i, s_clk, periph_if);
+        // Offset core i by i*WORD_SIZE so core i always hits bank i (banks 0..N_CORE-1),
+        // spreading narrow traffic across different banks and avoiding all-core-to-bank-0 aliasing.
+        // (stride = N_BANKS*WORD_SIZE keeps each core pinned to its own bank across all accesses)
+        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_PTR,  DM_CORE_IN_PTR  + i * WORD_SIZE, s_clk, periph_if);
+        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_PTR, DM_CORE_OUT_PTR + i * WORD_SIZE, s_clk, periph_if);
 
         periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_LEN0, DM_CORE_LEN0, s_clk, periph_if);
         periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_LEN1, DM_CORE_LEN1, s_clk, periph_if);
@@ -234,23 +239,45 @@ module tb_hci_system
 
         periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_TRANSP_MODE, DM_CORE_TRANSP_MODE, s_clk, periph_if);
       end else begin
+        // Set up HWPEs: first N_DMA_HWPE HWPEs run a DMA (1D linear copy), remaining run a GEMM (2D tile).
+        //   N_HWPE=1: 0 DMA + 1 GEMM  (pure weight-tile read)
+        //   N_HWPE=2: 1 DMA + 1 GEMM  (prefetch + compute overlap)
+        //   N_HWPE=4: 2 DMA + 2 GEMM  (dual prefetch + dual compute)
         i_hwpe = i - N_CORE;
-        $info("Configuring HWPE datamover %0d", i_hwpe);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_PTR, DM_HWPE_IN_PTR + N_BANKS*WORD_SIZE*dm_hwpe_in_d0_len*i_hwpe, s_clk, periph_if);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_PTR, DM_HWPE_OUT_PTR + N_BANKS*WORD_SIZE*dm_hwpe_out_d0_len*i_hwpe, s_clk, periph_if);
-
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_LEN0, DM_HWPE_LEN0, s_clk, periph_if);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_LEN1, DM_HWPE_LEN1, s_clk, periph_if);
-
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D0_STRIDE, DM_HWPE_IN_D0_STRIDE, s_clk, periph_if);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D1_STRIDE, DM_HWPE_IN_D1_STRIDE, s_clk, periph_if);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D2_STRIDE, DM_HWPE_IN_D2_STRIDE, s_clk, periph_if);
-
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D0_STRIDE, DM_HWPE_OUT_D0_STRIDE, s_clk, periph_if);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D1_STRIDE, DM_HWPE_OUT_D1_STRIDE, s_clk, periph_if);
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D2_STRIDE, DM_HWPE_OUT_D2_STRIDE, s_clk, periph_if);
-
-        periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_TRANSP_MODE, DM_HWPE_TRANSP_MODE, s_clk, periph_if);
+        if (i_hwpe < N_DMA_HWPE) begin
+          // DMA pattern: 1D linear copy, (dm_hwpe_dma_in_d0_len+1) wide beats
+          $info("Configuring HWPE datamover %0d as DMA", i_hwpe);
+          hwpe_in_base  = DM_HWPE_BASE + i_hwpe * DM_HWPE_DMA_SLOT_SIZE;
+          hwpe_out_base = hwpe_in_base + DM_HWPE_DMA_IN_FOOTPRINT;
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_PTR,       hwpe_in_base,               s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_PTR,      hwpe_out_base,              s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_LEN0,         DM_HWPE_DMA_LEN0,           s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_LEN1,         DM_HWPE_DMA_LEN1,           s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D0_STRIDE, DM_HWPE_DMA_IN_D0_STRIDE,  s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D1_STRIDE, DM_HWPE_DMA_IN_D1_STRIDE,  s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D2_STRIDE, DM_HWPE_DMA_IN_D2_STRIDE,  s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D0_STRIDE,DM_HWPE_DMA_OUT_D0_STRIDE, s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D1_STRIDE,DM_HWPE_DMA_OUT_D1_STRIDE, s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D2_STRIDE,DM_HWPE_DMA_OUT_D2_STRIDE, s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_TRANSP_MODE,  DM_HWPE_DMA_TRANSP_MODE,   s_clk, periph_if);
+        end else begin
+          // GEMM pattern: 2D tiled weight-matrix access, (d0_len+1) beats × (d1_len+1) rows
+          gemm_idx      = i_hwpe - N_DMA_HWPE;
+          $info("Configuring HWPE datamover %0d as GEMM (gemm_idx=%0d)", i_hwpe, gemm_idx);
+          hwpe_in_base  = DM_HWPE_BASE + N_DMA_HWPE * DM_HWPE_DMA_SLOT_SIZE + gemm_idx * DM_HWPE_GEMM_SLOT_SIZE;
+          hwpe_out_base = hwpe_in_base + DM_HWPE_GEMM_IN_FOOTPRINT;
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_PTR,       hwpe_in_base,                s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_PTR,      hwpe_out_base,               s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_LEN0,         DM_HWPE_GEMM_LEN0,           s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_LEN1,         DM_HWPE_GEMM_LEN1,           s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D0_STRIDE, DM_HWPE_GEMM_IN_D0_STRIDE,  s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D1_STRIDE, DM_HWPE_GEMM_IN_D1_STRIDE,  s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_D2_STRIDE, DM_HWPE_GEMM_IN_D2_STRIDE,  s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D0_STRIDE,DM_HWPE_GEMM_OUT_D0_STRIDE, s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D1_STRIDE,DM_HWPE_GEMM_OUT_D1_STRIDE, s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_D2_STRIDE,DM_HWPE_GEMM_OUT_D2_STRIDE, s_clk, periph_if);
+          periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_TRANSP_MODE,  DM_HWPE_GEMM_TRANSP_MODE,   s_clk, periph_if);
+        end
       end
       repeat (10) @(posedge s_clk);
     end
@@ -274,6 +301,7 @@ module tb_hci_system
 
     $info("Waiting for end of task...");
     while ((& dm_done) != 1) begin
+      repeat(10) @(posedge s_clk);
       for(int i = 0; i < N_DATAMOVERS; i++) begin
         if (dm_done[i] != 1'b1) begin
           dm_offset = { i[PERIPH_SEL_WIDTH-1:0], {(32-PERIPH_SEL_WIDTH){1'b0}} };
@@ -285,8 +313,8 @@ module tb_hci_system
           end
         end
       end
-      repeat(20) @(posedge s_clk);
     end
+    @(posedge s_clk);
 
     if (VCD_ENABLE) begin
       $info("VCD dumping done, flushing... ", VCD_FILE);
