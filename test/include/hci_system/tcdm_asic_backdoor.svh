@@ -8,18 +8,19 @@
 // Must be `included inside the tb_hci_system module body (not in a package) because
 // `force` hierarchical paths require module-scope name resolution at compile time.
 
-// Some synthesis runs preserve the active-low we_i_BAR port name from the RAM macro
-// wrapper; others flatten it to the standard active-high we_i.  Select at compile time:
-//   active-low  (we_i_BAR):  +define+TCDM_WE_ACTIVE_LOW   (default if not set: active-high)
-//   active-high (we_i):      no extra define needed
+// Two compile-time defines control this file:
+//   +define+TCDM_WE_ACTIVE_LOW  -> netlist exposes active-low we_i_BAR (default: active-high we_i)
+//   +define+TCDM_64_BANKS       -> netlist has 64 banks (default: 32 banks)
 `ifdef TCDM_WE_ACTIVE_LOW
   `define TCDM_WE_PORT we_i_BAR
   `define TCDM_WE_ASSERT 1'b0
 `else
   `define TCDM_WE_PORT we_i
-  `define TCDM_WE_ASSERT 1'b1
+  `define TCDM_WE_ASSERT 1'b0
 `endif
 
+`ifdef TCDM_ASIC_FAST_PRELOAD
+`ifdef TARGET_ASIC
 // Force all 5 tc_sram ports for one bank using the post-layout flat instance names.
 // Case statement required because SV `force` does not support variable-index
 // hierarchical paths on flat netlist instances.
@@ -194,6 +195,169 @@ task automatic tcdm_backdoor_force(
              force tb_hci_system.i_dut.i_tcdm.gen_banks_31__i_bank.be_i     = 4'hF;
              force tb_hci_system.i_dut.i_tcdm.gen_banks_31__i_bank.addr_i   = s_addr;
              force tb_hci_system.i_dut.i_tcdm.gen_banks_31__i_bank.wdata_i  = s_wdata; end
+
+`ifdef TCDM_64_BANKS
+    32: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.wdata_i  = s_wdata; end
+    33: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.wdata_i  = s_wdata; end
+    34: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.wdata_i  = s_wdata; end
+    35: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.wdata_i  = s_wdata; end
+    36: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.wdata_i  = s_wdata; end
+    37: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.wdata_i  = s_wdata; end
+    38: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.wdata_i  = s_wdata; end
+    39: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.wdata_i  = s_wdata; end
+    40: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.wdata_i  = s_wdata; end
+    41: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.wdata_i  = s_wdata; end
+    42: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.wdata_i  = s_wdata; end
+    43: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.wdata_i  = s_wdata; end
+    44: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.wdata_i  = s_wdata; end
+    45: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.wdata_i  = s_wdata; end
+    46: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.wdata_i  = s_wdata; end
+    47: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.wdata_i  = s_wdata; end
+    48: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.wdata_i  = s_wdata; end
+    49: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.wdata_i  = s_wdata; end
+    50: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.wdata_i  = s_wdata; end
+    51: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.wdata_i  = s_wdata; end
+    52: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.wdata_i  = s_wdata; end
+    53: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.wdata_i  = s_wdata; end
+    54: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.wdata_i  = s_wdata; end
+    55: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.wdata_i  = s_wdata; end
+    56: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.wdata_i  = s_wdata; end
+    57: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.wdata_i  = s_wdata; end
+    58: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.wdata_i  = s_wdata; end
+    59: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.wdata_i  = s_wdata; end
+    60: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.wdata_i  = s_wdata; end
+    61: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.wdata_i  = s_wdata; end
+    62: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.wdata_i  = s_wdata; end
+    63: begin force tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.req_i    = 1'b1;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.`TCDM_WE_PORT = `TCDM_WE_ASSERT;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.be_i     = 4'hF;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.addr_i   = s_addr;
+             force tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.wdata_i  = s_wdata; end
+`endif
     default: $fatal(1, "tcdm_backdoor_force: bank_idx %0d out of range", bank_idx);
   endcase
 endtask : tcdm_backdoor_force
@@ -360,6 +524,172 @@ task automatic tcdm_backdoor_release(input int unsigned bank_idx);
              release tb_hci_system.i_dut.i_tcdm.gen_banks_31__i_bank.be_i;
              release tb_hci_system.i_dut.i_tcdm.gen_banks_31__i_bank.addr_i;
              release tb_hci_system.i_dut.i_tcdm.gen_banks_31__i_bank.wdata_i; end
+
+`ifdef TCDM_64_BANKS
+    32: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_32__i_bank.wdata_i; end
+    33: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_33__i_bank.wdata_i; end
+    34: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_34__i_bank.wdata_i; end
+    35: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_35__i_bank.wdata_i; end
+    36: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_36__i_bank.wdata_i; end
+    37: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_37__i_bank.wdata_i; end
+    38: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_38__i_bank.wdata_i; end
+    39: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_39__i_bank.wdata_i; end
+    40: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_40__i_bank.wdata_i; end
+    41: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_41__i_bank.wdata_i; end
+    42: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_42__i_bank.wdata_i; end
+    43: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_43__i_bank.wdata_i; end
+    44: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_44__i_bank.wdata_i; end
+    45: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_45__i_bank.wdata_i; end
+    46: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_46__i_bank.wdata_i; end
+    47: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_47__i_bank.wdata_i; end
+    48: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_48__i_bank.wdata_i; end
+    49: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_49__i_bank.wdata_i; end
+    50: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_50__i_bank.wdata_i; end
+    51: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_51__i_bank.wdata_i; end
+    52: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_52__i_bank.wdata_i; end
+    53: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_53__i_bank.wdata_i; end
+    54: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_54__i_bank.wdata_i; end
+    55: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_55__i_bank.wdata_i; end
+    56: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_56__i_bank.wdata_i; end
+    57: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_57__i_bank.wdata_i; end
+    58: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_58__i_bank.wdata_i; end
+    59: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_59__i_bank.wdata_i; end
+    60: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_60__i_bank.wdata_i; end
+    61: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_61__i_bank.wdata_i; end
+    62: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_62__i_bank.wdata_i; end
+    63: begin release tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.req_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.`TCDM_WE_PORT;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.be_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.addr_i;
+             release tb_hci_system.i_dut.i_tcdm.gen_banks_63__i_bank.wdata_i; end
+`endif
     default: $fatal(1, "tcdm_backdoor_release: bank_idx %0d out of range", bank_idx);
   endcase
 endtask : tcdm_backdoor_release
+
+`endif
+`endif

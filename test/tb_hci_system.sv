@@ -10,8 +10,10 @@ timeprecision 1ps;
 
 `include "hci_helpers.svh"
 
-`ifdef TARGET_ASIC
-`include "tcdm_asic_backdoor.svh"
+`ifdef TCDM_ASIC_FAST_PRELOAD
+  `ifdef TARGET_ASIC
+    `include "tcdm_asic_backdoor.svh"
+  `endif
 `endif
 
 module tb_hci_system
@@ -159,7 +161,8 @@ module tb_hci_system
     #TbTA;
 
     $info("Initializing TCDM");
-`ifdef TARGET_ASIC
+`ifdef TCDM_ASIC_FAST_PRELOAD
+  `ifdef TARGET_ASIC
     // Backdoor: force tc_sram ports directly on all N_BANKS in parallel,
     // bypassing HCI interconnect (1 clock per word row instead of 1 per word total).
     for (int j = 0; j < BANK_SIZE / WORD_SIZE; j++) begin
@@ -172,6 +175,9 @@ module tb_hci_system
     for (int i = 0; i < N_BANKS; i++)
       tcdm_backdoor_release(i);
     repeat (5) @(posedge s_clk);
+  `else
+    $fatal("TCDM_ASIC_FAST_PRELOAD is only supported for TARGET_ASIC");
+  `endif
 `else
     s_ext_tcdm_req = 1'b1;
     s_ext_tcdm_wen = 1'b0; // wen = 0 for HCI protocol
