@@ -62,10 +62,10 @@ package tb_hci_system_pkg;
   //   d1: M dimension — (d1_len+1) rows of the weight tile
   // Output: 1D write of (out_d0_len+1) partial-sum beats (one per TCDM row).
   //
-  // For HWPE_WIDTH_FACT=16 (512-bit bus):
-  //   1 beat = 16 words = 64 bytes → K = (d0_len+1)*16 = 64 int32 per row
-  //   d1_stride = (d0_len+1) * d0_stride = 4 * 64 = 256 bytes (one matrix row)
-  //   tile: 4 rows × 64 elements → total 16 beats in, 16 beats out
+  // With stride = N_BANKS*WORD_SIZE (one bank-row step):
+  //   1 beat = HWPE_WIDTH_FACT words wide, stride = N_BANKS words
+  //   d1_stride = (d0_len+1) * N_BANKS * WORD_SIZE (one tile-row stride in bank-rows)
+  //   tile: 4 rows × 4 beats → total 16 beats in, 16 beats out
 
   localparam logic [11:0] dm_hwpe_gemm_in_d0_len  = 3;   // 4 wide beats per tile row
   localparam logic [11:0] dm_hwpe_gemm_in_d1_len  = 3;   // 4 tile rows
@@ -75,18 +75,21 @@ package tb_hci_system_pkg;
   localparam logic [31:0] DM_HWPE_GEMM_LEN0 = {dm_hwpe_gemm_in_d1_len[7:0], dm_hwpe_gemm_in_d0_len, dm_hwpe_gemm_tot_len};
   localparam logic [31:0] DM_HWPE_GEMM_LEN1 = {dm_hwpe_gemm_in_d1_len[11:8], dm_hwpe_gemm_out_d1_len, dm_hwpe_gemm_out_d0_len};
 
-  localparam logic [31:0] DM_HWPE_GEMM_IN_D0_STRIDE  = HWPE_WIDTH_FACT * WORD_SIZE;                          // 64 B: next beat in row
-  localparam logic [31:0] DM_HWPE_GEMM_IN_D1_STRIDE  = (dm_hwpe_gemm_in_d0_len + 1) * HWPE_WIDTH_FACT * WORD_SIZE; // 256 B: next tile row
+  // Strides use N_BANKS*WORD_SIZE so every beat maps to the same HWPE_WIDTH_FACT bank columns,
+  // keeping each HWPE's accesses permanently bank-disjoint from every other HWPE (LOG interco safe).
+  localparam logic [31:0] DM_HWPE_GEMM_IN_D0_STRIDE  = N_BANKS * WORD_SIZE;                               // one bank-row step
+  localparam logic [31:0] DM_HWPE_GEMM_IN_D1_STRIDE  = (dm_hwpe_gemm_in_d0_len + 1) * N_BANKS * WORD_SIZE; // next tile row
   localparam logic [31:0] DM_HWPE_GEMM_IN_D2_STRIDE  = 0;
-  localparam logic [31:0] DM_HWPE_GEMM_OUT_D0_STRIDE = N_BANKS * WORD_SIZE;  // 128 B: partial sums to different TCDM rows
+  localparam logic [31:0] DM_HWPE_GEMM_OUT_D0_STRIDE = N_BANKS * WORD_SIZE;  // partial sums to successive TCDM rows
   localparam logic [31:0] DM_HWPE_GEMM_OUT_D1_STRIDE = 0;
   localparam logic [31:0] DM_HWPE_GEMM_OUT_D2_STRIDE = 0;
   localparam logic [31:0] DM_HWPE_GEMM_TRANSP_MODE   = {29'b0, 3'b000};
 
   // Memory footprint per GEMM HWPE slot (input region + output region)
-  localparam int unsigned DM_HWPE_GEMM_IN_FOOTPRINT  = (dm_hwpe_gemm_in_d1_len + 1) * ((dm_hwpe_gemm_in_d0_len + 1) * HWPE_WIDTH_FACT * WORD_SIZE); // 4*256 = 1024 B
-  localparam int unsigned DM_HWPE_GEMM_OUT_FOOTPRINT = (dm_hwpe_gemm_out_d0_len + 1) * N_BANKS * WORD_SIZE; // 16*128 = 2048 B
-  localparam int unsigned DM_HWPE_GEMM_SLOT_SIZE     = DM_HWPE_GEMM_IN_FOOTPRINT + DM_HWPE_GEMM_OUT_FOOTPRINT; // 3072 B
+  // Footprint = number of bank rows consumed × N_BANKS × WORD_SIZE (beat width cancels with stride)
+  localparam int unsigned DM_HWPE_GEMM_IN_FOOTPRINT  = (dm_hwpe_gemm_in_d1_len + 1) * (dm_hwpe_gemm_in_d0_len + 1) * N_BANKS * WORD_SIZE;
+  localparam int unsigned DM_HWPE_GEMM_OUT_FOOTPRINT = (dm_hwpe_gemm_out_d0_len + 1) * N_BANKS * WORD_SIZE;
+  localparam int unsigned DM_HWPE_GEMM_SLOT_SIZE     = DM_HWPE_GEMM_IN_FOOTPRINT + DM_HWPE_GEMM_OUT_FOOTPRINT;
 
   ////////////////////////////////////////////
   // HWPE datamover config — DMA 1D copy   //
@@ -104,18 +107,19 @@ package tb_hci_system_pkg;
   localparam logic [31:0] DM_HWPE_DMA_LEN0 = {dm_hwpe_dma_in_d1_len[7:0], dm_hwpe_dma_in_d0_len, dm_hwpe_dma_tot_len};
   localparam logic [31:0] DM_HWPE_DMA_LEN1 = {dm_hwpe_dma_in_d1_len[11:8], dm_hwpe_dma_out_d1_len, dm_hwpe_dma_out_d0_len};
 
-  localparam logic [31:0] DM_HWPE_DMA_IN_D0_STRIDE  = HWPE_WIDTH_FACT * WORD_SIZE; // 64 B: sequential wide words
+  // Strides use N_BANKS*WORD_SIZE (same as GEMM) to keep this HWPE on the same bank column for all beats.
+  localparam logic [31:0] DM_HWPE_DMA_IN_D0_STRIDE  = N_BANKS * WORD_SIZE; // one bank-row step per beat
   localparam logic [31:0] DM_HWPE_DMA_IN_D1_STRIDE  = 0;
   localparam logic [31:0] DM_HWPE_DMA_IN_D2_STRIDE  = 0;
-  localparam logic [31:0] DM_HWPE_DMA_OUT_D0_STRIDE = HWPE_WIDTH_FACT * WORD_SIZE; // 64 B: sequential write
+  localparam logic [31:0] DM_HWPE_DMA_OUT_D0_STRIDE = N_BANKS * WORD_SIZE;
   localparam logic [31:0] DM_HWPE_DMA_OUT_D1_STRIDE = 0;
   localparam logic [31:0] DM_HWPE_DMA_OUT_D2_STRIDE = 0;
   localparam logic [31:0] DM_HWPE_DMA_TRANSP_MODE   = {29'b0, 3'b000};
 
   // Memory footprint per DMA HWPE slot (input + output)
-  localparam int unsigned DM_HWPE_DMA_IN_FOOTPRINT  = (dm_hwpe_dma_in_d0_len + 1) * HWPE_WIDTH_FACT * WORD_SIZE; // 16*64 = 1024 B
-  localparam int unsigned DM_HWPE_DMA_OUT_FOOTPRINT = DM_HWPE_DMA_IN_FOOTPRINT;                                   // 1024 B
-  localparam int unsigned DM_HWPE_DMA_SLOT_SIZE     = DM_HWPE_DMA_IN_FOOTPRINT + DM_HWPE_DMA_OUT_FOOTPRINT;       // 2048 B
+  localparam int unsigned DM_HWPE_DMA_IN_FOOTPRINT  = (dm_hwpe_dma_in_d0_len + 1) * N_BANKS * WORD_SIZE;
+  localparam int unsigned DM_HWPE_DMA_OUT_FOOTPRINT = (dm_hwpe_dma_out_d0_len + 1) * N_BANKS * WORD_SIZE;
+  localparam int unsigned DM_HWPE_DMA_SLOT_SIZE     = DM_HWPE_DMA_IN_FOOTPRINT + DM_HWPE_DMA_OUT_FOOTPRINT;
 
   ///////////////////////////
   // HWPE address layout   //
@@ -125,14 +129,23 @@ package tb_hci_system_pkg;
   //   N_HWPE=2: 1 DMA + 1 GEMM  → prefetch + compute overlap
   //   N_HWPE=4: 2 DMA + 2 GEMM  → dual prefetch + dual compute
   //
-  // Per-HWPE base addresses are computed in tb_hci_system.sv:
-  //   DMA  hwpe i:  DM_HWPE_BASE + i * DM_HWPE_DMA_SLOT_SIZE
-  //   GEMM hwpe j (j = i - N_HWPE/2):
-  //     DM_HWPE_BASE + (N_HWPE/2)*DM_HWPE_DMA_SLOT_SIZE + j*DM_HWPE_GEMM_SLOT_SIZE
+  // Bank-column assignment (LOG interco requirement):
+  //   Each wide HWPE i is assigned a permanent column of HWPE_WIDTH_FACT consecutive banks:
+  //     banks { i*HWPE_WIDTH_FACT, ..., (i+1)*HWPE_WIDTH_FACT-1 } mod N_BANKS
+  //   This is achieved by setting all strides to N_BANKS*WORD_SIZE (one bank-row step)
+  //   and spacing HWPE base addresses by DM_HWPE_BANK_COL_STRIDE = HWPE_WIDTH_FACT*WORD_SIZE.
+  //   Requires: N_BANKS >= N_HWPE * HWPE_WIDTH_FACT.
   //
+  // Per-HWPE base addresses are computed in tb_hci_system.sv:
+  //   Any hwpe i_hwpe (0-indexed):  DM_HWPE_BASE + i_hwpe * DM_HWPE_BANK_COL_STRIDE
+  //   out_base = in_base + DM_HWPE_{DMA,GEMM}_IN_FOOTPRINT
+  //
+  // DM_HWPE_BASE must be aligned to N_BANKS*WORD_SIZE (20 KB = 5120 words; 5120 % N_BANKS == 0
+  // for all power-of-two N_BANKS up to 5120).
   // The core region occupies bytes 0..(~16 KB), so 20 KB is a safe HWPE base.
-  localparam int unsigned N_DMA_HWPE    = N_HWPE / 2;
-  localparam logic [31:0] DM_HWPE_BASE  = 20 * 1024; // 20 KB
+  localparam int unsigned N_DMA_HWPE           = N_HWPE / 2;
+  localparam logic [31:0] DM_HWPE_BASE         = 20 * 1024; // 20 KB, aligned to N_BANKS*WORD_SIZE
+  localparam int unsigned DM_HWPE_BANK_COL_STRIDE = HWPE_WIDTH_FACT * WORD_SIZE; // byte offset between HWPE bank columns
 
   /////////////////////
   // Datamover utils //

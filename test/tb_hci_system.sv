@@ -123,11 +123,17 @@ module tb_hci_system
     logic [31:0] status;
     logic [31:0] dm_offset;
     logic [N_DATAMOVERS-1:0] dm_done;
-    int i_hwpe, gemm_idx;
+    int i_hwpe, gemm_idx, dm_i;
     logic [31:0] hwpe_in_base, hwpe_out_base;
     automatic logic ret;
 
     $info("Starting test");
+
+    // Warn if bank-column assignment overflows: HWPEs would alias onto the same banks and may
+    // deadlock under LOG interco. Simulation continues so the effect can be observed.
+    if (N_HWPE * HWPE_WIDTH_FACT > N_BANKS)
+      $warning("tb_hci_system: N_HWPE(%0d) * HWPE_WIDTH_FACT(%0d) = %0d exceeds N_BANKS(%0d); HWPE bank columns wrap around — LOG interco deadlock likely.",
+               N_HWPE, HWPE_WIDTH_FACT, N_HWPE * HWPE_WIDTH_FACT, N_BANKS);
 
     /* Initialize */
     status = '1;
@@ -251,9 +257,10 @@ module tb_hci_system
         //   N_HWPE=4: 2 DMA + 2 GEMM  (dual prefetch + dual compute)
         i_hwpe = i - N_CORE;
         if (i_hwpe < N_DMA_HWPE) begin
-          // DMA pattern: 1D linear copy, (dm_hwpe_dma_in_d0_len+1) wide beats
+          // DMA pattern: 1D strided access, (dm_hwpe_dma_in_d0_len+1) wide beats
+          // Base offset i_hwpe*DM_HWPE_BANK_COL_STRIDE pins this HWPE to bank column i_hwpe.
           $info("Configuring HWPE datamover %0d as DMA", i_hwpe);
-          hwpe_in_base  = DM_HWPE_BASE + i_hwpe * DM_HWPE_DMA_SLOT_SIZE;
+          hwpe_in_base  = DM_HWPE_BASE + i_hwpe * DM_HWPE_BANK_COL_STRIDE;
           hwpe_out_base = hwpe_in_base + DM_HWPE_DMA_IN_FOOTPRINT;
           periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_PTR,       hwpe_in_base,               s_clk, periph_if);
           periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_PTR,      hwpe_out_base,              s_clk, periph_if);
@@ -268,9 +275,11 @@ module tb_hci_system
           periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_TRANSP_MODE,  DM_HWPE_DMA_TRANSP_MODE,   s_clk, periph_if);
         end else begin
           // GEMM pattern: 2D tiled weight-matrix access, (d0_len+1) beats × (d1_len+1) rows
+          // Base offset i_hwpe*DM_HWPE_BANK_COL_STRIDE gives this HWPE its own bank column,
+          // disjoint from all DMA HWPEs (i_hwpe < N_DMA_HWPE) and other GEMM HWPEs.
           gemm_idx      = i_hwpe - N_DMA_HWPE;
           $info("Configuring HWPE datamover %0d as GEMM (gemm_idx=%0d)", i_hwpe, gemm_idx);
-          hwpe_in_base  = DM_HWPE_BASE + N_DMA_HWPE * DM_HWPE_DMA_SLOT_SIZE + gemm_idx * DM_HWPE_GEMM_SLOT_SIZE;
+          hwpe_in_base  = DM_HWPE_BASE + i_hwpe * DM_HWPE_BANK_COL_STRIDE;
           hwpe_out_base = hwpe_in_base + DM_HWPE_GEMM_IN_FOOTPRINT;
           periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_IN_PTR,       hwpe_in_base,                s_clk, periph_if);
           periph_write(dm_offset + datamover_package::DATAMOVER_REGISTER_OFFS, datamover_package::DATAMOVER_REG_OUT_PTR,      hwpe_out_base,               s_clk, periph_if);
@@ -290,19 +299,48 @@ module tb_hci_system
 
     $info("Triggering datamovers");
 
-    // if (VCD_ENABLE) begin
-    //   $info("VCD dumping enabled: dumping to file %s", VCD_FILE);
-    //   $dumpfile(VCD_FILE);
-    //   $dumpvars(0, i_dut);
-    // end else begin
-    //   $info("VCD dumping disabled");
-    // end
-
-    for(int i = 0; i < N_DATAMOVERS; i++) begin
-      $info("Triggering datamover %0d", i);
-      dm_offset = { i[PERIPH_SEL_WIDTH-1:0], {(32-PERIPH_SEL_WIDTH){1'b0}} };
-      periph_write(dm_offset + datamover_package::HWPE_REGISTER_OFFS, datamover_package::DATAMOVER_COMMIT_AND_TRIGGER, 32'h0, s_clk, periph_if);
-      @(posedge s_clk);
+    if (INTERCO == LOG && N_HWPE * HWPE_WIDTH_FACT > N_BANKS) begin
+      // Under LOG interco with bank overflow, simultaneous wide HWPEs alias onto the same
+      // banks and deadlock. Serialize HWPEs in bank-safe groups of N_BANKS/HWPE_WIDTH_FACT;
+      // cores are narrow and trigger unconditionally alongside the first group.
+      $info("LOG bank overflow (%0d HWPEs x %0d banks > %0d): serializing HWPEs in groups of %0d",
+            N_HWPE, HWPE_WIDTH_FACT, N_BANKS, N_BANKS / HWPE_WIDTH_FACT);
+      for (int i = 0; i < N_CORE; i++) begin
+        $info("Triggering datamover %0d", i);
+        dm_offset = { i[PERIPH_SEL_WIDTH-1:0], {(32-PERIPH_SEL_WIDTH){1'b0}} };
+        periph_write(dm_offset + datamover_package::HWPE_REGISTER_OFFS, datamover_package::DATAMOVER_COMMIT_AND_TRIGGER, 32'h0, s_clk, periph_if);
+        @(posedge s_clk);
+      end
+      for (i_hwpe = 0; i_hwpe < N_HWPE; i_hwpe += N_BANKS / HWPE_WIDTH_FACT) begin
+        for (int j = i_hwpe; j < i_hwpe + N_BANKS / HWPE_WIDTH_FACT && j < N_HWPE; j++) begin
+          dm_i = N_CORE + j;
+          $info("Triggering datamover %0d", dm_i);
+          dm_offset = { dm_i[PERIPH_SEL_WIDTH-1:0], {(32-PERIPH_SEL_WIDTH){1'b0}} };
+          periph_write(dm_offset + datamover_package::HWPE_REGISTER_OFFS, datamover_package::DATAMOVER_COMMIT_AND_TRIGGER, 32'h0, s_clk, periph_if);
+          @(posedge s_clk);
+        end
+        // Wait for this group before triggering the next (skip on last group — main wait handles it)
+        if (i_hwpe + N_BANKS / HWPE_WIDTH_FACT < N_HWPE) begin
+          for (int j = i_hwpe; j < i_hwpe + N_BANKS / HWPE_WIDTH_FACT && j < N_HWPE; j++) begin
+            dm_i = N_CORE + j;
+            dm_offset = { dm_i[PERIPH_SEL_WIDTH-1:0], {(32-PERIPH_SEL_WIDTH){1'b0}} };
+            status = '1;
+            while (status != 32'h00000000) begin
+              repeat(10) @(posedge s_clk);
+              periph_read(dm_offset + datamover_package::HWPE_REGISTER_OFFS, datamover_package::DATAMOVER_STATUS, status, s_clk, periph_if);
+            end
+            dm_done[dm_i] = 1'b1;
+            $info("Datamover %0d is done!", dm_i);
+          end
+        end
+      end
+    end else begin
+      for (int i = 0; i < N_DATAMOVERS; i++) begin
+        $info("Triggering datamover %0d", i);
+        dm_offset = { i[PERIPH_SEL_WIDTH-1:0], {(32-PERIPH_SEL_WIDTH){1'b0}} };
+        periph_write(dm_offset + datamover_package::HWPE_REGISTER_OFFS, datamover_package::DATAMOVER_COMMIT_AND_TRIGGER, 32'h0, s_clk, periph_if);
+        @(posedge s_clk);
+      end
     end
 
     $info("Waiting for end of task...");
@@ -321,6 +359,8 @@ module tb_hci_system
       end
     end
     @(posedge s_clk);
+
+    $info("All initiators are done.");
 
     // if (VCD_ENABLE) begin
     //   $info("VCD dumping done, flushing... ", VCD_FILE);
