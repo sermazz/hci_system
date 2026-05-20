@@ -143,4 +143,6 @@ if {$GUI == 1} {
     }
 
     configure wave -signalnamewidth 1
+} {
+    run -a
 }
