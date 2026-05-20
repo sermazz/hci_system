@@ -297,8 +297,15 @@ module tb_hci_system
       repeat (10) @(posedge s_clk);
     end
 
-    $info("Triggering datamovers");
+    if (VCD_ENABLE) begin
+      $info("VCD dumping enabled: dumping to file %s", VCD_FILE);
+      $dumpfile(VCD_FILE);
+      $dumpvars(0, i_dut);
+    end else begin
+      $info("VCD dumping disabled");
+    end
 
+    $info("Triggering datamovers");
     if (INTERCO == LOG && N_HWPE * HWPE_WIDTH_FACT > N_BANKS) begin
       // Under LOG interco with bank overflow, simultaneous wide HWPEs alias onto the same
       // banks and deadlock. Serialize HWPEs in bank-safe groups of N_BANKS/HWPE_WIDTH_FACT;
@@ -362,12 +369,12 @@ module tb_hci_system
 
     $info("All initiators are done.");
 
-    // if (VCD_ENABLE) begin
-    //   $info("VCD dumping done, flushing... ", VCD_FILE);
-    //   $dumpflush;
-    // end else begin
-    //   $info("VCD dumping disabled, skipping flush");
-    // end
+    if (VCD_ENABLE) begin
+      $info("VCD dumping done, flushing... ", VCD_FILE);
+      $dumpflush;
+    end else begin
+      $info("VCD dumping disabled, skipping flush");
+    end
     repeat(20) @(posedge s_clk);
     $info("Simulation ended");
     $finish();
